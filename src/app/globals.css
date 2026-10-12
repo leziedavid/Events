@@ -1,0 +1,226 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Mode clair : ivoire, or et bleu nuit (le bleu des fonds de photo des mariés). */
+:root {
+  --gold: #b0843a;
+  --gold-soft: #d9b979;
+  --navy: #14274a;
+  --leaf: #8fa58a;
+  --blossom: #e79aa2;
+  --blossom-deep: #b8475a;
+
+  --radius: 0.75rem;
+  --background: #fbf7f0;
+  --foreground: #1b2438;
+  --card: #fffdf9;
+  --card-foreground: #1b2438;
+  --popover: #fffdf9;
+  --popover-foreground: #1b2438;
+  --primary: var(--gold);
+  --primary-foreground: #fffdf9;
+  --secondary: var(--navy);
+  --secondary-foreground: #f8f1e4;
+  --muted: #f3ebdd;
+  --muted-foreground: #6c6a66;
+  --accent: #f6ead4;
+  --accent-foreground: #1b2438;
+  --destructive: #c2392f;
+  --success: #1f9d61;
+  --warning: #d98a1f;
+  --border: #e9dcc5;
+  --input: #e2d3b8;
+  --ring: var(--gold-soft);
+
+  --glow-a: rgba(244, 190, 150, 0.38);
+  --glow-b: rgba(217, 185, 121, 0.22);
+}
+
+/* Mode nuit : le bleu nuit des photos devient le fond, l'or s'éclaircit. */
+.dark {
+  --gold: #d6ae62;
+  --gold-soft: #b08a45;
+  --leaf: #7c9a84;
+
+  --background: #0a1426;
+  --foreground: #f5efe3;
+  --card: #101e38;
+  --card-foreground: #f5efe3;
+  --popover: #101e38;
+  --popover-foreground: #f5efe3;
+  --primary: var(--gold);
+  --primary-foreground: #0a1426;
+  --secondary: #1b315c;
+  --secondary-foreground: #f5efe3;
+  --muted: #15264a;
+  --muted-foreground: #a9b3c7;
+  --accent: #1a2d54;
+  --accent-foreground: #f5efe3;
+  --destructive: #f0685c;
+  --success: #3fcf8e;
+  --warning: #f0a94a;
+  --border: rgba(214, 174, 98, 0.18);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: var(--gold-soft);
+
+  --glow-a: rgba(41, 84, 160, 0.38);
+  --glow-b: rgba(214, 174, 98, 0.12);
+}
+
+@theme inline {
+  --font-sans: var(--font-jost), system-ui, sans-serif;
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-script: var(--font-script-face), cursive;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-navy: var(--navy);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Chiffres alignés : en chiffres elzéviriens, le « 1 » de Cormorant se lit comme un « I »
+       (numéros de table, compteurs) */
+    font-feature-settings: "lnum" 1;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    /* Les éléments qui entrent par le côté (Reveal) ne doivent pas créer de défilement horizontal */
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--gold) 35%, transparent);
+  }
+}
+
+@layer components {
+  /* Fond d'ambiance : halos aquarellés. Le background-color opaque est indispensable,
+     sinon ce qui se trouve derrière transparaît à travers les dégradés. */
+  .ambient-bg {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(60% 50% at 8% 12%, var(--glow-a), transparent 70%),
+      radial-gradient(45% 45% at 95% 85%, var(--glow-b), transparent 70%);
+  }
+
+  /* Carte « verre dépoli » */
+  .glass {
+    background-color: color-mix(in oklab, var(--card) 68%, transparent);
+    border: 1px solid color-mix(in oklab, var(--gold) 24%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 20px 50px -28px rgba(20, 39, 74, 0.45);
+  }
+
+  .text-gold-gradient {
+    background-image: linear-gradient(100deg, var(--gold) 0%, var(--gold-soft) 45%, var(--gold) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lift {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+
+  .lift:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--gold) 55%, transparent);
+    box-shadow: 0 24px 50px -24px color-mix(in oklab, var(--gold) 45%, transparent);
+  }
+
+  /* Ligne de balayage du scanner de QR Code */
+  .scan-line {
+    animation: scan-sweep 2.2s ease-in-out infinite;
+  }
+}
+
+/* Espace de gestion (/admin) : palette neutre et plate, façon panneau de réglages.
+   Les jetons du thème sont redéfinis localement ; l'or reste la couleur d'accent. */
+.admin-ui {
+  --background: #ffffff;
+  --foreground: #1f1e1d;
+  --card: #ffffff;
+  --card-foreground: #1f1e1d;
+  --muted: #f4f4f1;
+  --muted-foreground: #73726c;
+  --accent: #efeeea;
+  --accent-foreground: #1f1e1d;
+  --border: #e9e8e3;
+  --input: #dddcd5;
+  --admin-sidebar: #f9f9f7;
+}
+
+.dark .admin-ui {
+  --background: #1f1e1d;
+  --foreground: #f3f2ee;
+  --card: #262624;
+  --card-foreground: #f3f2ee;
+  --muted: #2d2d2a;
+  --muted-foreground: #a6a59e;
+  --accent: #34342f;
+  --accent-foreground: #f3f2ee;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.18);
+  --admin-sidebar: #191918;
+}
+
+/* Dans la gestion, les titres passent en police d'interface (modales et formulaires partagés compris) */
+.admin-ui .font-display {
+  font-family: var(--font-jost), system-ui, sans-serif;
+  font-weight: 600;
+}
+
+@keyframes scan-sweep {
+  0%, 100% { top: 6%; opacity: 0.2; }
+  50% { top: 92%; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .scan-line { animation: none; top: 50%; }
+  .lift:hover { transform: none; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+}
