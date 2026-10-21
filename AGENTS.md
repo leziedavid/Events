@@ -172,6 +172,13 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
 
+- **2026-10-22** — **Mairie (mariage civil).** « Nous rejoindre » (`components/home/Venue.tsx`)
+  affiche la mairie en premier (mairie → bénédiction → réception), seulement si son nom et son
+  adresse sont renseignés (`hasPlace`). Gestion dans /admin?tab=accueil, section « Mairie
+  (mariage civil) » juste après le lieu de la bénédiction (`PlaceForm` partagé, `townHallSchema` :
+  deux champs vides = retirée). Lieu « Mairie » pour les étapes du programme (heure et lien
+  Itinéraire). `EventSettings.townHall`.
+
 - **2026-10-21** — **Menu par QR Code, cartes signées par l'API, informations modifiables.**
   Page **/menu** (`app/menu/page.tsx`, chargement / erreur / menu vide, pensée mobile) ouverte par
   le nouveau QR Code « Le menu » de /admin?tab=qr-codes ; rendu partagé avec l'accueil

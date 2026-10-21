@@ -89,6 +89,8 @@ export interface EventSettings {
   home: HomeSections;
   dressCode: DressCode;
   ceremony: CeremonyPlace;
+  /** Mairie (mariage civil) ; nom et adresse vides = carte non affichée */
+  townHall: CeremonyPlace;
   programme: ProgrammeStep[];
   story: StoryInfo;
   /** Les invités choisissent eux-mêmes leur table dans le formulaire RSVP */
@@ -120,7 +122,7 @@ export interface ProgrammeStep {
   description: string;
   icon: ProgrammeIcon;
   /** Lieu de l'étape : un lien « Itinéraire » s'affiche sous la description */
-  place: "none" | "ceremony" | "reception";
+  place: "none" | "townHall" | "ceremony" | "reception";
 }
 
 /** Section « Notre histoire » */

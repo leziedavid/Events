@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRef } from "react";
 import { SectionTitle } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
-import { defaultCeremony, defaultSettings, mapsDirectionsUrl, wedding } from "@/config/wedding";
+import { defaultCeremony, defaultSettings, defaultTownHall, hasPlace, mapsDirectionsUrl, wedding } from "@/config/wedding";
 import { useEventInfo, useHomeSections, useSettings } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 import type { ProgrammeIcon, ProgrammeStep } from "@/types/interface";
@@ -41,6 +41,7 @@ export function Programme() {
   const event = useEventInfo();
   const settings = useSettings().data;
   const ceremony = settings?.ceremony ?? defaultCeremony;
+  const townHall = settings?.townHall ?? defaultTownHall;
   const steps = settings?.programme ?? defaultSettings.programme;
 
   const { scrollYProgress } = useScroll({ target: listRef, offset: ["start 75%", "end 60%"] });
@@ -56,7 +57,13 @@ export function Programme() {
   const builtinPhoto = programmePhoto === "traditionnel" || programmePhoto === "portrait" ? PHOTOS[programmePhoto] : null;
   const customPhoto = programmePhoto === "personnalisee" && programmePhotoUrl ? programmePhotoUrl : null;
   const hasPhoto = !!(builtinPhoto || customPhoto);
-  const addressOf = (place: ProgrammeStep["place"]) => (place === "ceremony" ? ceremony.address : event.venueAddress);
+  // Lieu d'une étape (lien « Itinéraire ») ; une mairie non renseignée n'affiche pas de lien
+  const placeOf = (place: ProgrammeStep["place"]) => {
+    if (place === "townHall") return hasPlace(townHall) ? townHall : null;
+    if (place === "ceremony") return ceremony;
+    if (place === "reception") return { name: event.venueName, address: event.venueAddress };
+    return null;
+  };
 
   return (
     <section
@@ -103,6 +110,7 @@ export function Programme() {
           {steps.map((step, i) => {
             const Icon = PROGRAMME_ICONS[step.icon];
             const left = i % 2 === 0;
+            const place = placeOf(step.place);
             return (
               <li key={step.id} className="relative mb-8 pl-16 last:mb-0 md:grid md:grid-cols-2 md:gap-16 md:pl-0">
                 <span className="absolute left-6 top-6 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border border-gold bg-card text-gold md:left-1/2">
@@ -113,15 +121,15 @@ export function Programme() {
                     <p className="font-display text-3xl font-semibold text-gold">{step.heure}</p>
                     <h3 className="mt-1 font-display text-2xl">{step.titre}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-                    {step.place !== "none" && (
+                    {place && (
                       <a
-                        href={mapsDirectionsUrl(addressOf(step.place))}
+                        href={mapsDirectionsUrl(place.address)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-gold underline-offset-4 hover:underline"
                       >
                         <MapPin className="size-4" />
-                        {step.place === "ceremony" ? ceremony.name : event.venueName} · Itinéraire
+                        {place.name} · Itinéraire
                       </a>
                     )}
                   </div>

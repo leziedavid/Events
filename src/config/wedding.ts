@@ -107,6 +107,12 @@ export const defaultCeremony: CeremonyPlace = {
   address: "Riviera Golf, Cocody, Abidjan, Côte d'Ivoire",
 };
 
+/** Mairie (mariage civil) : vide tant que l'organisateur ne l'a pas renseignée */
+export const defaultTownHall: CeremonyPlace = { name: "", address: "" };
+
+/** Lieu affichable : nom et adresse renseignés (une mairie laissée vide n'apparaît nulle part) */
+export const hasPlace = (place: CeremonyPlace | undefined): place is CeremonyPlace => !!place?.name.trim() && !!place.address.trim();
+
 export const defaultStory: StoryInfo = {
   text: wedding.story,
   groomParents: wedding.groom.parents,
@@ -151,6 +157,7 @@ export const defaultSettings: EventSettings = {
   home: defaultHome,
   dressCode: defaultDressCode,
   ceremony: defaultCeremony,
+  townHall: defaultTownHall,
   programme: wedding.programme,
   story: defaultStory,
   tableChoice: true,

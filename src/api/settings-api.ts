@@ -84,6 +84,7 @@ export async function updateSettings(patch: Partial<EventSettings>): Promise<Bas
   if (patch.menu) body.menuSettings = { catering: patch.menu.catering, catererName: patch.menu.catererName };
   if (patch.dressCode) body.dressCode = patch.dressCode;
   if (patch.ceremony) body.ceremony = patch.ceremony;
+  if (patch.townHall) body.townHall = patch.townHall;
   if (patch.story) body.story = patch.story;
 
   if (Object.keys(body).length) {

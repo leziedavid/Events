@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { mapsDirectionsUrl } from "@/config/wedding";
 import { useSettings, useUpdateSettings } from "@/hooks/useWedding";
 import { imageWidth, resizeImage } from "@/lib/image";
-import { ceremonySchema, dressCodeSchema, storySchema, type CeremonyInput, type DressCodeInput, type StoryInput } from "@/lib/schemas";
+import { ceremonySchema, dressCodeSchema, storySchema, townHallSchema, type CeremonyInput, type DressCodeInput, type StoryInput } from "@/lib/schemas";
 import type { CeremonyPlace, DressCode, EventSettings, HomeSections, ProgrammePhoto, StoryInfo } from "@/types/interface";
 
 type SectionKey = Exclude<keyof HomeSections, "programmePhoto" | "programmePhotoUrl">;
@@ -157,18 +157,35 @@ function StoryForm({ value, onSave, saving }: { value: StoryInfo; onSave: (v: St
   );
 }
 
-function CeremonyForm({ value, onSave, saving }: { value: CeremonyPlace; onSave: (v: CeremonyInput) => void; saving: boolean }) {
+/** Textes propres à chaque lieu géré avec ce formulaire */
+interface PlaceCopy {
+  /** « de la bénédiction », « de la mairie » */
+  of: string;
+  nameHint: string;
+  /** Lieu facultatif : deux champs vides le retirent du site */
+  optional?: boolean;
+}
+
+const CEREMONY_COPY: PlaceCopy = { of: "de la bénédiction", nameHint: "Église, paroisse ou temple de la bénédiction nuptiale." };
+const TOWN_HALL_COPY: PlaceCopy = {
+  of: "de la mairie",
+  nameHint: "Mairie du mariage civil (ex. Mairie de Cocody). Laissez le nom et l'adresse vides pour ne pas l'afficher.",
+  optional: true,
+};
+
+/** Nom et adresse d'un lieu de la journée (bénédiction, mairie), affiché dans « Nous rejoindre » */
+function PlaceForm({ value, copy, onSave, saving }: { value: CeremonyPlace; copy: PlaceCopy; onSave: (v: CeremonyInput) => void; saving: boolean }) {
   const { register, control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<CeremonyInput>({
-    resolver: zodResolver(ceremonySchema),
+    resolver: zodResolver(copy.optional ? townHallSchema : ceremonySchema),
     values: value,
   });
   const address = useWatch({ control, name: "address" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} noValidate>
-      <SettingRow title="Nom du lieu" description="Église, paroisse ou temple de la bénédiction nuptiale.">
+      <SettingRow title="Nom du lieu" description={copy.nameHint}>
         <div className="w-full sm:w-72">
-          <TextInput aria-label="Nom du lieu de la bénédiction" aria-invalid={!!errors.name} {...register("name")} />
+          <TextInput aria-label={`Nom du lieu ${copy.of}`} aria-invalid={!!errors.name} {...register("name")} />
           <FieldError message={errors.name?.message} />
         </div>
       </SettingRow>
@@ -186,7 +203,7 @@ function CeremonyForm({ value, onSave, saving }: { value: CeremonyPlace; onSave:
         }
       >
         <div className="w-full sm:w-72">
-          <TextInput aria-label="Adresse de la bénédiction" aria-invalid={!!errors.address} {...register("address")} />
+          <TextInput aria-label={`Adresse ${copy.of}`} aria-invalid={!!errors.address} {...register("address")} />
           <FieldError message={errors.address?.message} />
         </div>
       </SettingRow>
@@ -194,7 +211,7 @@ function CeremonyForm({ value, onSave, saving }: { value: CeremonyPlace; onSave:
         title="Heure"
         description={
           <>
-            L&apos;heure affichée est celle de l&apos;étape du programme rattachée à la bénédiction.{" "}
+            L&apos;heure affichée est celle de l&apos;étape du programme rattachée à ce lieu.{" "}
             <Link href="/admin?tab=programme" className="font-medium text-primary underline-offset-4 hover:underline">
               Modifier le programme
             </Link>
@@ -213,7 +230,7 @@ function CeremonyForm({ value, onSave, saving }: { value: CeremonyPlace; onSave:
   );
 }
 
-/** Onglet « Page d'accueil » : sections affichées, photo du programme, dress code, lieu de la bénédiction */
+/** Onglet « Page d'accueil » : sections affichées, photo du programme, dress code, lieux de la bénédiction et de la mairie */
 export function HomeTab() {
   const { data: settings } = useSettings();
   const update = useUpdateSettings();
@@ -332,7 +349,19 @@ export function HomeTab() {
         title="Lieu de la bénédiction nuptiale"
         description="Le lieu de la réception se règle dans l'onglet « Événement » (il figure sur les cartes d'invitation)."
       >
-        <CeremonyForm value={settings.ceremony} saving={update.isPending} onSave={(ceremony) => save({ ceremony }, "Lieu de la bénédiction enregistré")} />
+        <PlaceForm value={settings.ceremony} copy={CEREMONY_COPY} saving={update.isPending} onSave={(ceremony) => save({ ceremony }, "Lieu de la bénédiction enregistré")} />
+      </Section>
+
+      <Section
+        title="Mairie (mariage civil)"
+        description="Affichée en premier dans « Nous rejoindre », avant la bénédiction. Pour son heure et son lien Itinéraire dans le programme, choisissez le lieu « Mairie » sur l'étape du mariage civil."
+      >
+        <PlaceForm
+          value={settings.townHall}
+          copy={TOWN_HALL_COPY}
+          saving={update.isPending}
+          onSave={(townHall) => save({ townHall }, townHall.name ? "Mairie enregistrée" : "Mairie retirée du site")}
+        />
       </Section>
 
       <Section title="Notre histoire" description="Section placée en fin de page ; affichez-la avec l'interrupteur « Notre histoire » ci-dessus.">

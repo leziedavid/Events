@@ -1,15 +1,15 @@
 "use client";
 
-import { Church, Clock, MapPin, Navigation, PartyPopper, type LucideIcon } from "lucide-react";
+import { Church, Clock, Landmark, MapPin, Navigation, PartyPopper, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { SectionTitle } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
 import { buttonVariants } from "@/components/ui/button";
-import { defaultCeremony, defaultSettings, mapsDirectionsUrl, mapsEmbedUrl, weddingDateLabel, weddingTimeLabel } from "@/config/wedding";
+import { defaultCeremony, defaultSettings, defaultTownHall, hasPlace, mapsDirectionsUrl, mapsEmbedUrl, weddingDateLabel, weddingTimeLabel } from "@/config/wedding";
 import { useEventInfo, useSettings } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 
-type PlaceId = "ceremony" | "reception";
+type PlaceId = "townHall" | "ceremony" | "reception";
 
 interface Place {
   id: PlaceId;
@@ -20,19 +20,28 @@ interface Place {
   time: string;
 }
 
-/** Les deux lieux du jour : la bénédiction nuptiale puis la réception, chacun avec son itinéraire */
+/**
+ * Les lieux du jour dans l'ordre : la mairie (si l'organisateur l'a renseignée), la bénédiction
+ * nuptiale puis la réception, chacun avec son itinéraire.
+ */
 export function Venue() {
   const event = useEventInfo();
   const settings = useSettings().data;
   const ceremony = settings?.ceremony ?? defaultCeremony;
-  // Une seule source pour l'heure : l'étape du programme rattachée à la bénédiction
-  const ceremonyTime = (settings?.programme ?? defaultSettings.programme).find((s) => s.place === "ceremony")?.heure ?? "";
-  const [selected, setSelected] = useState<PlaceId>("ceremony");
+  const townHall = settings?.townHall ?? defaultTownHall;
+  // Une seule source pour l'heure : l'étape du programme rattachée au lieu
+  const programme = settings?.programme ?? defaultSettings.programme;
+  const timeOf = (place: PlaceId) => programme.find((s) => s.place === place)?.heure ?? "";
+  const [selected, setSelected] = useState<PlaceId | null>(null);
 
   const places: Place[] = [
-    { id: "ceremony", label: "Bénédiction nuptiale", icon: Church, name: ceremony.name, address: ceremony.address, time: ceremonyTime },
+    ...(hasPlace(townHall)
+      ? [{ id: "townHall" as const, label: "Mairie · mariage civil", icon: Landmark, name: townHall.name, address: townHall.address, time: timeOf("townHall") }]
+      : []),
+    { id: "ceremony", label: "Bénédiction nuptiale", icon: Church, name: ceremony.name, address: ceremony.address, time: timeOf("ceremony") },
     { id: "reception", label: "Réception", icon: PartyPopper, name: event.venueName, address: event.venueAddress, time: weddingTimeLabel(event.date) },
   ];
+  // Par défaut, le premier lieu de la journée est affiché sur la carte
   const shown = places.find((p) => p.id === selected) ?? places[0];
 
   return (
@@ -49,7 +58,7 @@ export function Venue() {
               <div
                 className={cn(
                   "glass rounded-3xl p-6 transition-colors sm:p-7",
-                  selected === place.id ? "border-gold" : "cursor-pointer hover:border-gold/60",
+                  shown.id === place.id ? "border-gold" : "cursor-pointer hover:border-gold/60",
                 )}
                 onClick={() => setSelected(place.id)}
               >
@@ -89,11 +98,11 @@ export function Venue() {
                       e.stopPropagation();
                       setSelected(place.id);
                     }}
-                    aria-pressed={selected === place.id}
-                    className={buttonVariants({ size: "sm", variant: selected === place.id ? "secondary" : "outline" })}
+                    aria-pressed={shown.id === place.id}
+                    className={buttonVariants({ size: "sm", variant: shown.id === place.id ? "secondary" : "outline" })}
                   >
                     <MapPin />
-                    {selected === place.id ? "Affiché sur la carte" : "Voir sur la carte"}
+                    {shown.id === place.id ? "Affiché sur la carte" : "Voir sur la carte"}
                   </button>
                 </div>
               </div>

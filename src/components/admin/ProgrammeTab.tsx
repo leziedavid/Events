@@ -25,9 +25,12 @@ const ICON_LABELS: Record<ProgrammeIcon, string> = {
 
 const PLACE_LABELS: Record<ProgrammeStep["place"], string> = {
   none: "Aucun lieu",
+  townHall: "Mairie",
   ceremony: "Lieu de la bénédiction",
   reception: "Lieu de la réception",
 };
+
+const PLACE_PILLS: Record<ProgrammeStep["place"], string> = { none: "", townHall: "Mairie", ceremony: "Bénédiction", reception: "Réception" };
 
 type Dialog = { type: "create" } | { type: "edit" | "delete"; step: ProgrammeStep } | null;
 
@@ -146,7 +149,7 @@ export function ProgrammeTab() {
                   {step.place !== "none" && (
                     <Pill>
                       <MapPin className="size-3" />
-                      {step.place === "ceremony" ? "Bénédiction" : "Réception"}
+                      {PLACE_PILLS[step.place]}
                     </Pill>
                   )}
                 </p>

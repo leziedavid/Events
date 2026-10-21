@@ -98,12 +98,24 @@ export const ceremonySchema = z.object({
   address: z.string().trim().min(3, "Indiquez l'adresse").max(160, "160 caractères maximum"),
 });
 
+/** Mairie : facultative (deux champs vides = retirée du site), sinon nom et adresse complets */
+export const townHallSchema = z
+  .object({
+    name: z.string().trim().max(80, "80 caractères maximum"),
+    address: z.string().trim().max(160, "160 caractères maximum"),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.name && !v.address) return;
+    if (v.name.length < 2) ctx.addIssue({ code: "custom", path: ["name"], message: "Indiquez le nom de la mairie" });
+    if (v.address.length < 3) ctx.addIssue({ code: "custom", path: ["address"], message: "Indiquez l'adresse de la mairie" });
+  });
+
 export const programmeStepSchema = z.object({
   heure: z.string().trim().min(1, "Indiquez l'heure").max(10, "10 caractères maximum"),
   titre: z.string().trim().min(2, "Indiquez un titre").max(60, "60 caractères maximum"),
   description: z.string().trim().max(200, "200 caractères maximum"),
   icon: z.enum(["rings", "church", "camera", "glass", "utensils", "music"]),
-  place: z.enum(["none", "ceremony", "reception"]),
+  place: z.enum(["none", "townHall", "ceremony", "reception"]),
 });
 
 export const storySchema = z.object({
@@ -149,6 +161,7 @@ export const settingsSchema = z
     home: homeSectionsSchema,
     dressCode: dressCodeSchema,
     ceremony: ceremonySchema,
+    townHall: townHallSchema,
     programme: z.array(programmeStepSchema.extend({ id: z.string().min(1) })).max(15, "15 étapes maximum"),
     story: storySchema,
     tableChoice: z.boolean(),
@@ -169,6 +182,7 @@ export const settingsSchema = z
 export type EventInput = z.infer<typeof eventSchema>;
 export type DressCodeInput = z.infer<typeof dressCodeSchema>;
 export type CeremonyInput = z.infer<typeof ceremonySchema>;
+export type TownHallInput = z.infer<typeof townHallSchema>;
 export type ProgrammeStepInput = z.infer<typeof programmeStepSchema>;
 export type StoryInput = z.infer<typeof storySchema>;
 export type QrCodeInput = z.infer<typeof qrCodeSchema>;
