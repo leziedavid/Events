@@ -24,6 +24,8 @@ export const rsvpSchema = z
       .min(1, "Minimum 1 personne")
       // Le plafond réel (réglage « maximum par famille ») est appliqué par l'API
       .max(20, "Maximum 20 personnes"),
+    // Table souhaitée ; absente = placement automatique. Les places libres sont vérifiées par l'API.
+    tableNumero: z.number().int().min(1).optional(),
   })
   .refine((d) => d.categorie === "FAMILLE" || d.nombrePersonnes === 1, {
     path: ["nombrePersonnes"],
@@ -65,10 +67,92 @@ export const menuSettingsSchema = z.object({
   catererName: z.string().trim().max(60, "60 caractères maximum"),
 });
 
+export const homeSectionsSchema = z.object({
+  programme: z.boolean(),
+  dressCode: z.boolean(),
+  gallery: z.boolean(),
+  venue: z.boolean(),
+  guestbook: z.boolean(),
+  story: z.boolean(),
+  programmePhoto: z.enum(["traditionnel", "portrait", "personnalisee", "aucune"]),
+  // Image redimensionnée côté navigateur avant l'envoi : ~300 Ko pour 1920 px
+  programmePhotoUrl: z.string().max(4_000_000, "Image trop lourde"),
+});
+
+export const dressCodeSchema = z.object({
+  title: z.string().trim().min(2, "Indiquez un titre").max(60, "60 caractères maximum"),
+  description: z.string().trim().max(280, "280 caractères maximum"),
+  colors: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, "Nommez la couleur").max(30, "30 caractères maximum"),
+        hex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide"),
+      }),
+    )
+    .max(8, "8 couleurs maximum"),
+  note: z.string().trim().max(160, "160 caractères maximum"),
+});
+
+export const ceremonySchema = z.object({
+  name: z.string().trim().min(2, "Indiquez le nom du lieu").max(80, "80 caractères maximum"),
+  address: z.string().trim().min(3, "Indiquez l'adresse").max(160, "160 caractères maximum"),
+});
+
+export const programmeStepSchema = z.object({
+  heure: z.string().trim().min(1, "Indiquez l'heure").max(10, "10 caractères maximum"),
+  titre: z.string().trim().min(2, "Indiquez un titre").max(60, "60 caractères maximum"),
+  description: z.string().trim().max(200, "200 caractères maximum"),
+  icon: z.enum(["rings", "church", "camera", "glass", "utensils", "music"]),
+  place: z.enum(["none", "ceremony", "reception"]),
+});
+
+export const storySchema = z.object({
+  text: z.string().trim().min(10, "Le texte est un peu court").max(600, "600 caractères maximum"),
+  groomParents: z.string().trim().max(120, "120 caractères maximum"),
+  brideParents: z.string().trim().max(120, "120 caractères maximum"),
+});
+
+export const qrCodeSchema = z.object({
+  label: z.string().trim().min(2, "Indiquez un titre").max(40, "40 caractères maximum"),
+  caption: z.string().trim().max(120, "120 caractères maximum"),
+  // Une page du site (« /rsvp ») ou une adresse web complète (« https://… »)
+  target: z
+    .string()
+    .trim()
+    .refine((v) => /^\/[^\s]*$/.test(v) || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v), "Saisissez une page du site (ex. /rsvp) ou une adresse complète (https://…)"),
+});
+
+const identifiantSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "3 caractères minimum")
+  .max(30, "30 caractères maximum")
+  .regex(/^[a-z0-9._-]+$/, "Lettres sans accent, chiffres, point, tiret ou souligné uniquement");
+
+export const passwordSchema = z.object({
+  password: z.string().min(8, "8 caractères minimum").max(64, "64 caractères maximum"),
+});
+
+export const accountSchema = z.object({
+  name: z.string().trim().min(2, "Indiquez un nom").max(40, "40 caractères maximum"),
+  identifiant: identifiantSchema,
+  role: z.enum(["ADMIN", "AGENT"]),
+});
+
+export const newAccountSchema = accountSchema.extend(passwordSchema.shape);
+
 export const settingsSchema = z
   .object({
     event: eventSchema,
     menu: menuSettingsSchema,
+    home: homeSectionsSchema,
+    dressCode: dressCodeSchema,
+    ceremony: ceremonySchema,
+    programme: z.array(programmeStepSchema.extend({ id: z.string().min(1) })).max(15, "15 étapes maximum"),
+    story: storySchema,
+    tableChoice: z.boolean(),
+    qrCodes: z.array(qrCodeSchema.extend({ id: z.string().min(1), kind: z.enum(["rsvp", "livre-dor", "ma-carte", "accueil", "verification", "custom"]) })).max(20),
     capacity: z.number().int().min(1, "Au moins 1 place").max(2000, "2000 places maximum"),
     tableSize: z.number().int().min(2, "Au moins 2 personnes par table").max(20, "20 personnes maximum par table"),
     familyMax: z.number().int().min(1, "Au moins 1 personne").max(20, "20 personnes maximum"),
@@ -76,9 +160,21 @@ export const settingsSchema = z
     guestbookOpen: z.boolean(),
   })
   // Un groupe n'est jamais séparé : une famille doit tenir à une seule table
-  .refine((s) => s.familyMax <= s.tableSize, { path: ["familyMax"], message: "Une famille doit tenir à une seule table" });
+  .refine((s) => s.familyMax <= s.tableSize, { path: ["familyMax"], message: "Une famille doit tenir à une seule table" })
+  .refine((s) => s.home.programmePhoto !== "personnalisee" || s.home.programmePhotoUrl !== "", {
+    path: ["home", "programmePhotoUrl"],
+    message: "Envoyez d'abord une photo",
+  });
 
 export type EventInput = z.infer<typeof eventSchema>;
+export type DressCodeInput = z.infer<typeof dressCodeSchema>;
+export type CeremonyInput = z.infer<typeof ceremonySchema>;
+export type ProgrammeStepInput = z.infer<typeof programmeStepSchema>;
+export type StoryInput = z.infer<typeof storySchema>;
+export type QrCodeInput = z.infer<typeof qrCodeSchema>;
+export type AccountInput = z.infer<typeof accountSchema>;
+export type NewAccountInput = z.infer<typeof newAccountSchema>;
+export type PasswordInput = z.infer<typeof passwordSchema>;
 export type MenuItemInput = z.infer<typeof menuItemSchema>;
 export type GuestbookInput = z.infer<typeof guestbookSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eraser, FileSpreadsheet, FileText, Lock, RotateCcw } from "lucide-react";
+import { Eraser, FileSpreadsheet, FileText, Lock } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { NumberField, Pill, Section, SettingRow, Switch, TextInput } from "@/com
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { coupleNamesOf, weddingDateLabel, weddingTimeLabel, weddingTitle } from "@/config/wedding";
-import { useCapacity, useClearData, useEventInfo, useResetDemo, useRsvps, useSettings, useUpdateSettings } from "@/hooks/useWedding";
+import { useCapacity, useClearData, useEventInfo, useRsvps, useSettings, useUpdateSettings } from "@/hooks/useWedding";
 import { exportGuestsExcel, exportGuestsPdf } from "@/lib/export";
 import { eventSchema, type EventInput } from "@/lib/schemas";
 import type { EventInfo, EventSettings } from "@/types/interface";
@@ -173,6 +173,20 @@ export function SettingsTab() {
         </SettingRow>
       </Section>
 
+      <Section title="Tables">
+        <SettingRow
+          title="Choix de la table par les invités"
+          description={`Le formulaire « Confirmer ma présence » propose la liste des tables : seules celles qui peuvent accueillir tout le groupe y figurent, une table complète disparaît. Désactivé, les invités sont placés automatiquement ; vous pouvez toujours choisir une table depuis l'onglet Invités.`}
+        >
+          <Switch
+            label="Choix de la table par les invités"
+            checked={settings.tableChoice}
+            disabled={update.isPending}
+            onChange={(tableChoice) => save({ tableChoice }, tableChoice ? "Les invités choisissent leur table" : "Placement automatique des invités")}
+          />
+        </SettingRow>
+      </Section>
+
       <Section title="Capacité" description="Ces réglages restent modifiables après les premières inscriptions.">
         <SettingRow
           title="Nombre de places"
@@ -201,9 +215,8 @@ export function SettingsTab() {
 export function DataTab() {
   const { data: guests = [] } = useRsvps();
   const event = useEventInfo();
-  const reset = useResetDemo();
   const clear = useClearData();
-  const [confirm, setConfirm] = useState<"reset" | "clear" | null>(null);
+  const [confirm, setConfirm] = useState<"clear" | null>(null);
 
   const exportAs = async (kind: "excel" | "pdf") => {
     if (guests.length === 0) return toast.error("Aucun invité à exporter.");
@@ -232,7 +245,7 @@ export function DataTab() {
         </SettingRow>
       </Section>
 
-      <Section title="Données" description="Les données sont enregistrées dans ce navigateur uniquement.">
+      <Section title="Données" description="Les données sont enregistrées sur le serveur de l'événement.">
         <SettingRow
           title="Repartir de zéro"
           description="Efface toutes les invitations, entrées, messages et rappels, en conservant vos réglages. Sans aucune inscription, les informations du mariage (onglet Événement) redeviennent modifiables."
@@ -240,15 +253,6 @@ export function DataTab() {
           <Button size="sm" variant="outline" onClick={() => setConfirm("clear")}>
             <Eraser />
             Tout effacer
-          </Button>
-        </SettingRow>
-        <SettingRow
-          title="Recharger la démonstration"
-          description="Efface tout, réglages compris, puis recharge le jeu de données fictif de départ (36 invitations)."
-        >
-          <Button size="sm" variant="destructive" onClick={() => setConfirm("reset")}>
-            <RotateCcw />
-            Réinitialiser
           </Button>
         </SettingRow>
       </Section>
@@ -273,24 +277,6 @@ export function DataTab() {
         irréversible.
       </ConfirmAction>
 
-      <ConfirmAction
-        open={confirm === "reset"}
-        onClose={() => setConfirm(null)}
-        title="Recharger la démonstration ?"
-        confirmLabel="Réinitialiser"
-        destructive
-        loading={reset.isPending}
-        onConfirm={() =>
-          reset.mutate(undefined, {
-            onSuccess: () => {
-              toast.success("Données de démonstration rétablies");
-              setConfirm(null);
-            },
-          })
-        }
-      >
-        Tout ce qui a été saisi sera effacé, y compris les réglages et les informations du mariage, et remplacé par les données fictives de départ.
-      </ConfirmAction>
     </>
   );
 }

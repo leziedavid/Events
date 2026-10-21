@@ -17,6 +17,7 @@ export function TablesTab() {
   const full = tables.filter((t) => t.occupied >= t.seats).length;
   const seats = tables.reduce((s, t) => s + t.seats, 0);
   const occupied = tables.reduce((s, t) => s + t.occupied, 0);
+  const chosen = tables.reduce((s, t) => s + t.guests.filter((g) => g.tableChoisie).length, 0);
 
   return (
     <>
@@ -24,7 +25,7 @@ export function TablesTab() {
         title="Plan de table"
         description={
           tables.length
-            ? `${tables.length} tables ouvertes · ${full} pleine${full > 1 ? "s" : ""} · ${occupied} / ${seats} sièges occupés (${Math.round((occupied / seats) * 100)}%)`
+            ? `${tables.length} tables ouvertes · ${full} pleine${full > 1 ? "s" : ""} · ${occupied} / ${seats} sièges occupés (${Math.round((occupied / seats) * 100)}%) · ${chosen} invitation${chosen > 1 ? "s ont" : " a"} choisi sa table`
             : undefined
         }
         action={
@@ -63,6 +64,11 @@ export function TablesTab() {
                         <span className="flex min-w-0 items-center gap-2">
                           <span className={cn("size-1.5 shrink-0 rounded-full", g.isVerified ? "bg-success" : "bg-muted-foreground/40")} title={g.isVerified ? "Arrivé" : "En attente"} />
                           <span className="truncate">{displayName(g)}</span>
+                          {g.tableChoisie && (
+                            <span title="Table choisie par l'invité" className="shrink-0 text-xs text-primary">
+                              choisie
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 tabular-nums text-muted-foreground">({g.nombrePersonnes})</span>
                       </li>
@@ -91,7 +97,8 @@ export function TablesTab() {
           })
         }
       >
-        Tous les invités sont replacés depuis la Table 1, dans l&apos;ordre d&apos;inscription, pour combler les places libérées. Les numéros de table peuvent changer :
+        Les invités qui ont choisi leur table y restent (tant que leur groupe y tient). Les autres sont replacés depuis la Table 1, dans l&apos;ordre
+        d&apos;inscription, pour combler les places libérées. Les numéros de table peuvent changer :
         les cartes déjà téléchargées ou imprimées afficheront l&apos;ancien numéro.
       </ConfirmAction>
     </>

@@ -83,7 +83,7 @@ export function Hero() {
       </div>
 
       <motion.a
-        href="#maries"
+        href="#programme"
         aria-label="Découvrir la suite"
         style={{ opacity: fade }}
         className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 text-gold sm:block"

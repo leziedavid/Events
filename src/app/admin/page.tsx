@@ -2,15 +2,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Armchair, BellRing, BookHeart, Database, ExternalLink, History, LayoutDashboard, LogOut, Menu, ScanLine, Search, Settings2, Users, UtensilsCrossed, X,
+  Armchair, BellRing, BookHeart, Database, ExternalLink, History, CalendarClock, LayoutDashboard, LogOut, Menu, PanelsTopLeft, QrCode, ScanLine, Search, Settings2, UserCog, Users, UtensilsCrossed, X,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ComponentType } from "react";
+import { AccountsTab } from "@/components/admin/AccountsTab";
 import { GuestbookTab, RemindersTab } from "@/components/admin/CommunicationTab";
 import { DashboardTab } from "@/components/admin/DashboardTab";
 import { GuestsTab } from "@/components/admin/GuestsTab";
+import { HomeTab } from "@/components/admin/HomeTab";
+import { ProgrammeTab } from "@/components/admin/ProgrammeTab";
+import { QrTab } from "@/components/admin/QrTab";
 import { MenuTab } from "@/components/admin/MenuTab";
 import { ScansTab } from "@/components/admin/ScansTab";
 import { DataTab, SettingsTab } from "@/components/admin/SettingsTab";
@@ -46,12 +50,16 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "rappels", label: "Rappels", icon: BellRing, component: RemindersTab },
       { id: "livre-dor", label: "Livre d'or", icon: BookHeart, component: GuestbookTab },
+      { id: "qr-codes", label: "QR Codes", icon: QrCode, component: QrTab },
     ],
   },
   {
     label: "Configuration",
     tabs: [
+      { id: "accueil", label: "Page d'accueil", icon: PanelsTopLeft, component: HomeTab },
+      { id: "programme", label: "Programme", icon: CalendarClock, component: ProgrammeTab },
       { id: "evenement", label: "Événement", icon: Settings2, component: SettingsTab },
+      { id: "comptes", label: "Comptes", icon: UserCog, component: AccountsTab },
       { id: "donnees", label: "Données", icon: Database, component: DataTab },
     ],
   },

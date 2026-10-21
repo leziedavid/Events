@@ -1,16 +1,27 @@
+import { deleteCookie, setCookie } from "@/lib/cookies";
 import type { SessionUser } from "@/types/interface";
 
 // Les cookies `token` et `role` sont lus par `src/proxy.ts` pour protéger /admin et
-// /verification avant même le rendu de la page.
+// /verification avant même le rendu de la page ; `eventId` désigne l'événement géré
+// (routes /events/:eventId de l'API). Le jeton est un JWT de l'API, lié à une session
+// serveur révocable : sa durée de vie fait foi, le cookie n'est qu'un transport.
 
-const DAY = 60 * 60 * 24;
+export interface SessionTokens {
+  accessToken: string;
+  refreshToken: string;
+  /** Expiration du jeton d'accès (ISO) */
+  expiresAt: string;
+}
 
-export function setSession(token: string, user: SessionUser): void {
-  document.cookie = `token=${token}; path=/; max-age=${DAY}; samesite=lax`;
-  document.cookie = `role=${user.role}; path=/; max-age=${DAY}; samesite=lax`;
+export function setSession(tokens: SessionTokens, user: SessionUser): void {
+  const maxAge = Math.max(60, Math.floor((new Date(tokens.expiresAt).getTime() - Date.now()) / 1000));
+  setCookie("token", tokens.accessToken, maxAge);
+  setCookie("role", user.role, maxAge);
+  setCookie("eventId", user.eventId, maxAge);
 }
 
 export function clearSession(): void {
-  document.cookie = "token=; path=/; max-age=0; samesite=lax";
-  document.cookie = "role=; path=/; max-age=0; samesite=lax";
+  deleteCookie("token");
+  deleteCookie("role");
+  deleteCookie("eventId");
 }

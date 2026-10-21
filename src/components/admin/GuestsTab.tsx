@@ -15,7 +15,6 @@ import { useCapacity, useCreateRsvp, useDeleteRsvp, useRestoreRsvp, useRevokeRsv
 import { badgeFilename, downloadBadge, printBadge } from "@/lib/badge";
 import { normalizePhone } from "@/lib/security";
 import { cn, displayName, formatHour, personnes } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 import type { GuestCategory, Rsvp } from "@/types/interface";
 
 type Dialog = { type: "create" } | { type: "edit" | "badge" | "delete" | "validate" | "revoke"; guest: Rsvp } | null;
@@ -34,7 +33,6 @@ export function GuestsTab() {
   const { data: settings } = useSettings();
   const familyMax = settings?.familyMax ?? wedding.familyMax;
   const remaining = capacity?.remaining ?? 0;
-  const agent = useAuthStore((s) => s.user?.name) ?? "Organisateur";
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<GuestCategory | "ALL">("ALL");
@@ -154,7 +152,13 @@ export function GuestsTab() {
                     </p>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {g.telephone} · {c.label}
-                      {!g.isRevoked && <> · Table {g.tableNumero}</>} · <span className="font-mono text-xs">{g.verificationCode}</span>
+                      {!g.isRevoked && (
+                        <>
+                          {" "}· Table {g.tableNumero}
+                          {g.tableChoisie && <span className="text-primary"> (choisie)</span>}
+                        </>
+                      )}{" "}
+                      · <span className="font-mono text-xs">{g.verificationCode}</span>
                     </p>
                   </div>
                 </div>
@@ -198,14 +202,16 @@ export function GuestsTab() {
       </Section>
 
       <Modal open={dialog?.type === "create"} onClose={close} title="Ajouter un invité" description="La table est attribuée automatiquement.">
-        <RsvpForm submitLabel="Ajouter l'invité" loading={create.isPending} maxPersons={remaining} onSubmit={(values) => create.mutate(values, { onSuccess: done("Invité ajouté"), onError })} />
+        <RsvpForm forceTableChoice submitLabel="Ajouter l'invité" loading={create.isPending} maxPersons={remaining} onSubmit={(values) => create.mutate(values, { onSuccess: done("Invité ajouté"), onError })} />
       </Modal>
 
       <Modal open={dialog?.type === "edit"} onClose={close} title="Modifier l'invitation">
         {dialog?.type === "edit" && (
           <RsvpForm
             key={dialog.guest.id}
-            defaultValues={dialog.guest}
+            guestId={dialog.guest.id}
+            forceTableChoice
+            defaultValues={{ ...dialog.guest, tableNumero: dialog.guest.tableChoisie ? dialog.guest.tableNumero : undefined }}
             submitLabel="Enregistrer"
             loading={update.isPending}
             maxPersons={remaining + dialog.guest.nombrePersonnes}
@@ -273,7 +279,7 @@ export function GuestsTab() {
         title="Valider l'entrée ?"
         confirmLabel="Valider l'entrée"
         loading={validate.isPending}
-        onConfirm={() => dialog?.type === "validate" && validate.mutate({ guestId: dialog.guest.id, source: "ADMIN", agent }, { onSuccess: done("Entrée validée"), onError })}
+        onConfirm={() => dialog?.type === "validate" && validate.mutate({ guestId: dialog.guest.id, source: "ADMIN" }, { onSuccess: done("Entrée validée"), onError })}
       >
         {dialog?.type === "validate" && (
           <>

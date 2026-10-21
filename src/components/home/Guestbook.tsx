@@ -8,14 +8,15 @@ import { GuestbookForm } from "@/components/guestbook/GuestbookForm";
 import { SectionTitle } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
 import { useMounted } from "@/hooks/useMounted";
-import { useGuestbook } from "@/hooks/useWedding";
+import { useGuestbook, useQrUrl } from "@/hooks/useWedding";
 import { formatDateTime } from "@/lib/utils";
 
 export function Guestbook() {
   const { data: messages = [] } = useGuestbook();
   const mounted = useMounted();
   // L'adresse dépend de l'endroit où le site est servi : elle n'est connue que côté client
-  const guestbookUrl = mounted ? `${window.location.origin}/livre-dor` : "";
+  const qrUrl = useQrUrl("livre-dor");
+  const guestbookUrl = mounted ? qrUrl : "";
 
   return (
     <section id="livre-dor" className="ambient-bg px-6 py-24 sm:py-32">

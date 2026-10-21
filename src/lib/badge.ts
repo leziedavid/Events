@@ -18,12 +18,12 @@ export async function badgeFile(node: HTMLElement, filename: string): Promise<Fi
   return new File([blob], filename, { type: "image/png" });
 }
 
-/** Ouvre la carte seule dans une fenêtre et lance l'impression (réimpression côté admin) */
-export async function printBadge(node: HTMLElement): Promise<void> {
+/** Ouvre l'image seule dans une fenêtre et lance l'impression (carte d'invitation, affiche QR) */
+export async function printBadge(node: HTMLElement, title = "Carte d'invitation"): Promise<void> {
   const dataUrl = await badgeToPng(node);
   const win = window.open("", "_blank");
   if (!win) throw new Error("Autorisez les fenêtres pop-up pour imprimer la carte.");
-  win.document.title = "Carte d'invitation";
+  win.document.title = title;
   win.document.body.style.margin = "0";
   const img = win.document.createElement("img");
   img.style.width = "100%";

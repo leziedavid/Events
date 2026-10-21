@@ -8,7 +8,7 @@ import { Divider } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
 import { buttonVariants } from "@/components/ui/button";
 import { useMounted } from "@/hooks/useMounted";
-import { useCapacity } from "@/hooks/useWedding";
+import { useCapacity, useQrUrl } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 
 /** QR Code principal : il mène au formulaire RSVP, au même titre que le bouton */
@@ -17,7 +17,8 @@ export function RsvpCta() {
   const { data: capacity } = useCapacity();
   // L'adresse dépend de l'endroit où le site est servi : elle n'est connue que côté client
   const closed = !!capacity && (capacity.isFull || capacity.isClosed);
-  const rsvpUrl = mounted ? `${window.location.origin}/rsvp` : "";
+  const qrUrl = useQrUrl("rsvp");
+  const rsvpUrl = mounted ? qrUrl : "";
 
   return (
     <section id="rsvp" className="px-6 py-24 sm:py-32">

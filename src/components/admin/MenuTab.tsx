@@ -80,7 +80,7 @@ export function MenuTab() {
       <Section title="Présentation">
         <SettingRow
           title="Afficher le menu aux invités"
-          description="Ajoute la section « Le menu » sur la page d'accueil. Lorsque cette option est désactivée, le menu reste modifiable ici mais les invités ne le voient pas."
+          description="Ajoute la section « Le menu » sur la page d'accueil (même réglage que dans l'onglet « Page d'accueil »). Désactivée, le menu reste modifiable ici mais les invités ne le voient pas."
         >
           <Switch label="Afficher le menu aux invités" checked={menuSettings?.visible ?? false} disabled={!menuSettings || updateSettings.isPending} onChange={(visible) => saveSettings({ visible }, visible ? "Menu affiché sur l'accueil" : "Menu masqué")} />
         </SettingRow>

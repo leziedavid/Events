@@ -1,14 +1,7 @@
 // Source unique des informations du mariage : tout ce qui est propre aux mariés
 // (noms, date, lieu, programme, photos) se modifie ici, sans toucher aux composants.
 
-import type { EventInfo, EventSettings } from "@/types/interface";
-
-export interface ProgrammeItem {
-  heure: string;
-  titre: string;
-  description: string;
-  icon: "rings" | "church" | "camera" | "glass" | "utensils" | "music";
-}
+import type { CeremonyPlace, DressCode, EventInfo, EventSettings, HomeSections, ProgrammeStep, QrCodeEntry, QrKind, StoryInfo } from "@/types/interface";
 
 export interface GalleryItem {
   src: string;
@@ -48,14 +41,15 @@ export const wedding = {
   story:
     "Deux chemins qui se croisent, deux familles qui s'unissent. C'est avec une immense joie que nous vous convions à célébrer notre union et à partager avec nous ce jour béni.",
 
+  // Valeurs de départ ; l'organisateur les modifie dans /admin?tab=programme
   programme: [
-    { heure: "09h00", titre: "Mariage civil", description: "Échange des consentements à la mairie, entourés de nos familles.", icon: "rings" },
-    { heure: "11h00", titre: "Bénédiction nuptiale", description: "Cérémonie religieuse et bénédiction des mariés.", icon: "church" },
-    { heure: "13h00", titre: "Séance photo", description: "Photos avec les familles et les invités dans les jardins.", icon: "camera" },
-    { heure: "15h00", titre: "Cocktail de bienvenue", description: "Accueil des invités, contrôle des invitations et rafraîchissements.", icon: "glass" },
-    { heure: "17h00", titre: "Dîner de réception", description: "Entrée des mariés, discours et repas.", icon: "utensils" },
-    { heure: "20h00", titre: "Soirée dansante", description: "Ouverture du bal, gâteau et piste de danse jusqu'au bout de la nuit.", icon: "music" },
-  ] as ProgrammeItem[],
+    { id: "p1", heure: "09h00", titre: "Mariage civil", description: "Échange des consentements à la mairie, entourés de nos familles.", icon: "rings", place: "none" },
+    { id: "p2", heure: "11h00", titre: "Bénédiction nuptiale", description: "Cérémonie religieuse et bénédiction des mariés.", icon: "church", place: "ceremony" },
+    { id: "p3", heure: "13h00", titre: "Séance photo", description: "Photos avec les familles et les invités dans les jardins.", icon: "camera", place: "none" },
+    { id: "p4", heure: "15h00", titre: "Cocktail de bienvenue", description: "Accueil des invités, contrôle des invitations et rafraîchissements.", icon: "glass", place: "reception" },
+    { id: "p5", heure: "17h00", titre: "Dîner de réception", description: "Entrée des mariés, discours et repas.", icon: "utensils", place: "none" },
+    { id: "p6", heure: "20h00", titre: "Soirée dansante", description: "Ouverture du bal, gâteau et piste de danse jusqu'au bout de la nuit.", icon: "music", place: "none" },
+  ] as ProgrammeStep[],
 
   // Deux photos pour l'instant : elles sont recadrées différemment en attendant le reste.
   gallery: [
@@ -81,6 +75,66 @@ export const defaultEvent: EventInfo = {
   venueAddress: wedding.venue.address,
 };
 
+/** Sections affichées au départ : menu, galerie et « Notre histoire » masqués (réactivables) */
+export const defaultHome: HomeSections = {
+  programme: true,
+  dressCode: true,
+  gallery: false,
+  venue: true,
+  guestbook: true,
+  story: false,
+  programmePhoto: "traditionnel",
+  programmePhotoUrl: "",
+};
+
+// Valeurs de démonstration, inspirées des tenues des photos (pagne kita orange, or, blanc)
+export const defaultDressCode: DressCode = {
+  title: "Élégance et couleurs du kita",
+  description:
+    "Tenue de soirée chic. Pagnes, kita et tenues traditionnelles sont les bienvenus : venez sublimés dans les couleurs du mariage.",
+  colors: [
+    { name: "Or", hex: "#C59D5F" },
+    { name: "Orange kita", hex: "#D9822B" },
+    { name: "Ivoire", hex: "#F5EFE3" },
+    { name: "Bleu nuit", hex: "#14274A" },
+  ],
+  note: "Merci d'éviter le blanc intégral, réservé à la mariée.",
+};
+
+// Lieu fictif, à remplacer par l'église ou la paroisse réelle
+export const defaultCeremony: CeremonyPlace = {
+  name: "Paroisse de la bénédiction",
+  address: "Riviera Golf, Cocody, Abidjan, Côte d'Ivoire",
+};
+
+export const defaultStory: StoryInfo = {
+  text: wedding.story,
+  groomParents: wedding.groom.parents,
+  brideParents: wedding.bride.parents,
+};
+
+/** Page visée par défaut par chaque QR Code de la plateforme (rétablie par « Lien par défaut ») */
+export const QR_DEFAULT_TARGETS: Record<Exclude<QrKind, "custom">, string> = {
+  rsvp: "/rsvp",
+  "livre-dor": "/livre-dor",
+  "ma-carte": "/ma-carte",
+  accueil: "/",
+  verification: "/verification",
+};
+
+export const defaultQrCodes: QrCodeEntry[] = [
+  { id: "qr-rsvp", kind: "rsvp", label: "Confirmer ma présence", caption: "Scannez pour confirmer votre présence et recevoir votre carte d'invitation.", target: QR_DEFAULT_TARGETS.rsvp },
+  { id: "qr-livre-dor", kind: "livre-dor", label: "Livre d'or", caption: "Scannez pour laisser un mot aux mariés.", target: QR_DEFAULT_TARGETS["livre-dor"] },
+  { id: "qr-ma-carte", kind: "ma-carte", label: "Retrouver ma carte", caption: "Carte égarée ? Scannez et saisissez votre numéro de téléphone.", target: QR_DEFAULT_TARGETS["ma-carte"] },
+  { id: "qr-accueil", kind: "accueil", label: "Notre mariage", caption: "Programme, lieux et dress code : tout est sur notre site.", target: QR_DEFAULT_TARGETS.accueil },
+  { id: "qr-verification", kind: "verification", label: "Contrôle des entrées", caption: "Réservé aux agents d'accueil.", target: QR_DEFAULT_TARGETS.verification },
+];
+
+/** Adresse complète encodée dans un QR Code : une page du site est rattachée au domaine courant */
+export function resolveQrTarget(target: string, origin: string): string {
+  return /^https?:\/\//i.test(target) ? target : `${origin}${target.startsWith("/") ? "" : "/"}${target}`;
+}
+
 /** Réglages de départ ; l'organisateur peut ensuite les changer dans /admin?tab=evenement */
 export const defaultSettings: EventSettings = {
   capacity: wedding.capacity,
@@ -90,7 +144,15 @@ export const defaultSettings: EventSettings = {
   guestbookOpen: true,
   event: defaultEvent,
   // Traiteur fictif, pour la démonstration
-  menu: { visible: true, catering: true, catererName: "Saveurs d'Akwaba" },
+  // Menu masqué sur l'accueil au départ : il reste géré dans /admin?tab=menu
+  menu: { visible: false, catering: true, catererName: "Saveurs d'Akwaba" },
+  home: defaultHome,
+  dressCode: defaultDressCode,
+  ceremony: defaultCeremony,
+  programme: wedding.programme,
+  story: defaultStory,
+  tableChoice: true,
+  qrCodes: defaultQrCodes,
 };
 
 export const coupleNamesOf = (event: EventInfo) => `${event.groomName} & ${event.brideName}`;

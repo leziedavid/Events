@@ -6,7 +6,7 @@ import { weddingTitle } from "@/config/wedding";
 import { displayName, formatDateTime } from "@/lib/utils";
 import type { Rsvp } from "@/types/interface";
 
-const HEADERS = ["Invité", "Téléphone", "Catégorie", "Personnes", "Table", "Code", "Statut", "Inscrit le"];
+const HEADERS = ["Invité", "Téléphone", "Catégorie", "Personnes", "Table", "Table choisie", "Code", "Statut", "Inscrit le"];
 
 function toRow(g: Rsvp): (string | number)[] {
   return [
@@ -15,6 +15,7 @@ function toRow(g: Rsvp): (string | number)[] {
     categoryMeta(g.categorie).label,
     g.nombrePersonnes,
     g.isRevoked ? "-" : g.tableNumero,
+    g.tableChoisie ? "Oui" : "Non",
     g.verificationCode,
     g.isRevoked ? "Révoquée" : g.isVerified && g.verifiedAt ? `Arrivé (${formatDateTime(g.verifiedAt)})` : "En attente",
     formatDateTime(g.createdAt),
@@ -24,7 +25,7 @@ function toRow(g: Rsvp): (string | number)[] {
 export async function exportGuestsExcel(guests: Rsvp[]): Promise<void> {
   const XLSX = await import("xlsx");
   const sheet = XLSX.utils.aoa_to_sheet([HEADERS, ...guests.map(toRow)]);
-  sheet["!cols"] = [28, 18, 16, 11, 8, 14, 24, 18].map((wch) => ({ wch }));
+  sheet["!cols"] = [28, 18, 16, 11, 8, 13, 14, 24, 18].map((wch) => ({ wch }));
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Invités");
   XLSX.writeFile(book, "invites-mariage.xlsx");

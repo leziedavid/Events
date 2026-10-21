@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { KeyRound, ScanLine, ShieldCheck } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -13,14 +13,13 @@ import { Divider } from "@/components/shared/Ornaments";
 import { EASE } from "@/components/shared/Reveal";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
-import { DEMO_ACCOUNTS } from "@/data/seed";
 import { loginSchema, type LoginInput } from "@/lib/schemas";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
   const router = useRouter();
   const signIn = useAuthStore((s) => s.signIn);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginInput>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { identifiant: "", password: "" },
   });
@@ -28,11 +27,11 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: async (input: LoginInput) => {
       const res = await login(input);
-      if (!res.data) throw new Error(res.message);
+      if (!res.data) throw new Error(res.message || "Connexion impossible.");
       return res.data;
     },
-    onSuccess: ({ token, user }) => {
-      signIn(token, user);
+    onSuccess: ({ tokens, user }) => {
+      signIn(tokens, user);
       toast.success(`Bienvenue, ${user.name}`);
       // Lu sans useSearchParams pour ne pas imposer de frontière Suspense à la page
       const next = new URLSearchParams(window.location.search).get("next");
@@ -66,35 +65,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* DÉMO : comptes fictifs affichés en clair pour la présentation — à retirer avec le backend */}
-          <div className="mt-7 rounded-2xl border border-dashed border-gold/40 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold">Comptes de démonstration</p>
-            <div className="mt-3 grid gap-2">
-              {DEMO_ACCOUNTS.map((account) => {
-                const Icon = account.role === "ADMIN" ? ShieldCheck : ScanLine;
-                return (
-                  <button
-                    key={account.identifiant}
-                    type="button"
-                    onClick={() => {
-                      setValue("identifiant", account.identifiant);
-                      setValue("password", account.password);
-                    }}
-                    className="flex items-center gap-3 rounded-xl bg-muted/70 px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent"
-                  >
-                    <Icon className="size-4 shrink-0 text-gold" />
-                    <span className="flex-1">
-                      <span className="block font-medium">{account.name}</span>
-                      <span className="block font-mono text-xs text-muted-foreground">
-                        {account.identifiant} / {account.password}
-                      </span>
-                    </span>
-                    <span className="text-xs text-gold">Remplir</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </motion.div>
       </main>
     </>

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { QrScanner, type ScanFeedback } from "@/components/verification/QrScanner";
 import { VerificationResult } from "@/components/verification/VerificationResult";
 import { useMounted } from "@/hooks/useMounted";
-import { useLookupInvitation, useRsvps, useValidateEntry } from "@/hooks/useWedding";
+import { useLookupInvitation, useScanStats, useValidateEntry } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import type { LookupResult, ScanSource } from "@/types/interface";
@@ -41,8 +41,9 @@ export default function VerificationPage() {
 
   const lookup = useLookupInvitation();
   const validate = useValidateEntry();
-  const { data: guests = [] } = useRsvps();
-  const arrived = guests.filter((g) => g.isVerified);
+  // Compteurs de l'API (l'agent n'a pas accès à la liste des invités), rafraîchis en direct
+  const { data: stats } = useScanStats();
+  const arrivedInvitations = stats?.arrivedInvitations ?? 0;
 
   // Le halo vert / rouge du scanner s'éteint de lui-même
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function VerificationPage() {
     (raw: string, from: ScanSource) => {
       if (!raw.trim()) return;
       runLookup(
-        { raw, source: from, agent },
+        { raw, source: from },
         {
           onSuccess: (res) => {
             const good = res.status === "FOUND";
@@ -70,7 +71,7 @@ export default function VerificationPage() {
         },
       );
     },
-    [runLookup, agent],
+    [runLookup],
   );
 
   const onScan = useCallback((text: string) => check(text, "QR"), [check]);
@@ -83,7 +84,7 @@ export default function VerificationPage() {
   const validateEntry = () => {
     if (!result?.guest) return;
     validate.mutate(
-      { guestId: result.guest.id, source, agent },
+      { guestId: result.guest.id, source },
       {
         onSuccess: (guest) => {
           vibrate(200);
@@ -147,8 +148,8 @@ export default function VerificationPage() {
       <div className="mx-auto mt-6 max-w-xl">
         <h1 className="font-display text-4xl font-medium">Contrôle des entrées</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {agent} · {arrived.length} invitation{arrived.length > 1 ? "s" : ""} validée{arrived.length > 1 ? "s" : ""} ·{" "}
-          {arrived.reduce((s, g) => s + g.nombrePersonnes, 0)} personnes entrées
+          {agent} · {arrivedInvitations} invitation{arrivedInvitations > 1 ? "s" : ""} validée{arrivedInvitations > 1 ? "s" : ""} ·{" "}
+          {stats?.arrivedPersons ?? 0} personnes entrées
         </p>
 
         <div className="glass mt-5 grid grid-cols-2 rounded-full p-1" role="tablist">

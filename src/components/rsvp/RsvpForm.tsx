@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
+import { Field, Input, Select } from "@/components/ui/input";
 import { CATEGORIES } from "@/config/categories";
 import { wedding } from "@/config/wedding";
-import { useSettings } from "@/hooks/useWedding";
+import { useSettings, useTableOptions } from "@/hooks/useWedding";
 import { rsvpSchema } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 import type { GuestCategory, RsvpInput } from "@/types/interface";
@@ -20,20 +21,41 @@ interface RsvpFormProps {
   submitLabel: string;
   /** Places encore disponibles pour ce formulaire : borne le sélecteur « famille » */
   maxPersons?: number;
+  /** Invité modifié (administration) : ses propres places comptent comme libres à sa table */
+  guestId?: string;
+  /** Administration : la liste des tables reste disponible même si le choix est fermé aux invités */
+  forceTableChoice?: boolean;
 }
 
 /** Formulaire RSVP, partagé par la page publique et l'administration (ajout / modification) */
-export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPersons }: RsvpFormProps) {
+export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPersons, guestId, forceTableChoice }: RsvpFormProps) {
   const { data: settings } = useSettings();
   const familyMax = settings?.familyMax ?? wedding.familyMax;
+  const tableSize = settings?.tableSize ?? wedding.tableSize;
+  const { data: tables } = useTableOptions(guestId);
+  const showTables = forceTableChoice || (settings?.tableChoice ?? true);
   const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<RsvpInput>({
     resolver: zodResolver(rsvpSchema),
     defaultValues: { nom: "", telephone: "", nombrePersonnes: 1, ...defaultValues },
   });
   const categorie = useWatch({ control, name: "categorie" });
   const nombre = useWatch({ control, name: "nombrePersonnes" });
+  const tableNumero = useWatch({ control, name: "tableNumero" });
   const isFamily = categorie === "FAMILLE";
   const max = Math.max(1, Math.min(familyMax, maxPersons ?? familyMax));
+
+  // Seules les tables qui peuvent accueillir tout le groupe sont proposées : une table complète
+  // (ou trop remplie pour cette famille) disparaît de la liste
+  const groupSize = isFamily ? nombre || 1 : 1;
+  const available = useMemo(() => (tables ?? []).filter((t) => t.free >= groupSize), [tables, groupSize]);
+
+  // La table choisie ne convient plus (famille agrandie, ou table prise entre-temps par un
+  // autre invité) : on revient au placement automatique plutôt que d'échouer à l'envoi
+  useEffect(() => {
+    if (tableNumero !== undefined && tables && !available.some((t) => t.numero === tableNumero)) {
+      setValue("tableNumero", undefined);
+    }
+  }, [available, tableNumero, tables, setValue]);
 
   const selectCategory = (value: GuestCategory) => {
     setValue("categorie", value, { shouldValidate: true });
@@ -116,6 +138,29 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showTables && (
+      <Field
+        label="Choisir ma table"
+        htmlFor="rsvp-table"
+        error={errors.tableNumero?.message}
+        hint={`Tables de ${tableSize} places. Une table complète n'apparaît plus dans la liste.`}
+      >
+        <Select
+          id="rsvp-table"
+          className="h-12"
+          value={tableNumero ?? ""}
+          onChange={(e) => setValue("tableNumero", e.target.value ? Number(e.target.value) : undefined, { shouldValidate: true })}
+        >
+          <option value="">Placement automatique</option>
+          {available.map((t) => (
+            <option key={t.numero} value={t.numero}>
+              Table {t.numero} — {t.free === t.seats ? "libre" : `${t.free} place${t.free > 1 ? "s" : ""} libre${t.free > 1 ? "s" : ""}`}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      )}
 
       <Button type="submit" size="lg" className="w-full" loading={loading}>
         {submitLabel}

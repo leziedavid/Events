@@ -38,13 +38,13 @@ npx tsc --noEmit -p .
   capacité, taille des tables, programme, galerie, musique). `src/config/categories.ts` : les
   quatre catégories d'invités.
 - `src/app/` : `/` (accueil), `/rsvp`, `/invitation/[code]` (carte), `/livre-dor` (formulaire du livre d'or), `/ma-carte` (retrouver sa carte), `/login`, `/verification`
-  (agents d'accueil), `/admin?tab=dashboard|invites|tables|scans|menu|rappels|livre-dor|evenement|donnees`.
+  (agents d'accueil), `/admin?tab=dashboard|invites|tables|scans|menu|rappels|livre-dor|qr-codes|accueil|programme|evenement|comptes|donnees`.
 - `src/proxy.ts` (middleware Next 16) : `/admin` et `/verification` exigent le cookie `token` ;
   `/admin` exige en plus `role=ADMIN`.
 - `src/api/*.ts` : API simulée. Chaque fonction a la signature du futur appel HTTP et renvoie un
   `BaseResponse<T>` (`src/types/interface.ts`). **Toutes les règles métier y sont** : quota,
   doublon de téléphone, attribution des tables, validation unique d'une entrée.
-- `src/lib/storage.ts` : la « base » (`localStorage`, clé `mariage-db-v3` — incrémenter le suffixe quand les valeurs de départ changent), initialisée par
+- `src/lib/storage.ts` : la « base » (`localStorage`, clé `mariage-db-v5` — incrémenter le suffixe quand les valeurs de départ changent), initialisée par
   `src/data/seed.ts`. Chaque écriture émet `DB_EVENT` ; `QueryProvider` invalide alors toutes les
   requêtes (et écoute `storage` pour les autres onglets) : c'est le « temps réel » de la démo.
 - `src/api/settings-api.ts` : réglages modifiables par l'organisateur (`EventSettings` : capacité,
@@ -66,6 +66,41 @@ npx tsc --noEmit -p .
   `admin/` (un fichier par onglet), `shared/` (`Reveal`, ornements, `CapacityMeter`), `layout/`.
 
 ## Règles métier
+
+- Accueil (`components/home/HomeContent.tsx`) : Bannière, Programme (photo de fond), Dress code,
+  Menu, Galerie, Lieux (bénédiction + réception), bloc RSVP, Livre d'or, Notre histoire (en fin
+  de page). Chaque section sauf la bannière et le bloc RSVP s'affiche ou se masque dans
+  `/admin?tab=accueil` (`settings.home`, `settings.menu.visible`) ; l'en-tête ne montre que les
+  liens des sections visibles. Au départ, Menu, Galerie et Notre histoire sont masqués.
+- **Tout contenu ajouté à l'accueil doit être réglable dans la gestion** (demande des mariés) :
+  dress code, lieu de la bénédiction, texte et parents de « Notre histoire » (onglet Page
+  d'accueil), étapes du programme (onglet Programme), choix de table (onglet Événement), liens
+  des QR Codes (onglet QR Codes). Valeurs de départ dans `config/wedding.ts` (`default*`), lues
+  côté client via `useSettings()` ; jamais `wedding.*` directement dans un composant.
+- L'heure de la bénédiction est celle de l'étape du programme rattachée au lieu « bénédiction »
+  (une seule source).
+- Photo du programme : les photos fournies (590 px) s'affichent **à leur taille réelle**, fixes au
+  centre de l'écran, dans une section passée en palette nuit (classe `dark` sur la section) ; les
+  étirer en plein écran les rend floues. Une photo envoyée (`lib/image.ts`, réduite à 1920 px,
+  stockée en data URL) couvre toute la section. `writeDb` renvoie `false` si le navigateur refuse
+  l'écriture (quota) : `updateSettings` le signale au lieu d'échouer en silence.
+- Comptes (`api/accounts-api.ts`, onglet Comptes) : rôles ADMIN (toute la gestion) et AGENT
+  (contrôle des entrées seul, via `proxy.ts`). Identifiant en minuscules et unique, mot de passe
+  8 caractères minimum, compte désactivable. Il reste toujours un administrateur actif, et on ne
+  peut ni supprimer ni désactiver son propre compte. La page de connexion ne propose que les
+  comptes de démonstration encore intacts (`getDemoLogins`). DÉMO : mots de passe en clair dans
+  le navigateur — à hacher côté serveur.
+- Gestion des invités : la table choisie par l'invité est signalée (« choisie ») dans Invités,
+  Tables et l'export (colonne « Table choisie ») ; l'ajout et la modification proposent la même
+  liste de tables que le formulaire public.
+- QR Codes de la plateforme (`settings.qrCodes`) : lien = page du site (« /rsvp ») ou adresse
+  complète ; `resolveQrTarget` y ajoute le domaine courant, `useQrUrl(kind)` le fournit aux
+  composants de l'accueil. Les affiches (`QrTab.tsx`) s'exportent avec `downloadBadge` /
+  `printBadge`. Imprimés depuis localhost, ils pointent vers l'ordinateur : l'onglet le signale.
+- Choix de table : le formulaire RSVP propose une liste déroulante des tables (`tableOptions`) ;
+  seules celles qui peuvent accueillir **tout** le groupe apparaissent, une table pleine disparaît.
+  Sans choix, placement automatique. Une table choisie (`tableChoisie`) est vérifiée par l'API et
+  conservée par « Réorganiser les tables » tant que le groupe y tient.
 
 - Capacité 150 personnes : `places restantes = 150 − somme des personnes confirmées`. À 0, le
   formulaire est remplacé par « Les réservations sont désormais clôturées. »
@@ -133,6 +168,29 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 ## Dernières modifications (du plus récent au plus ancien)
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
+
+- **2026-10-21** — **Photo du programme nette, comptes, suivi des tables choisies.** Fond du
+  programme refait (`Programme.tsx`) + envoi d'une photo personnelle (Page d'accueil,
+  `lib/image.ts`). Onglet **/admin?tab=comptes** (`AccountsTab.tsx`, `api/accounts-api.ts`) :
+  création, modification, mot de passe, activation, suppression des comptes admin et agent ; la
+  connexion lit ces comptes. Tables choisies visibles dans Invités, Tables et l'export.
+
+- **2026-10-21** — **QR Codes, programme et histoire réglables.** Onglet **/admin?tab=qr-codes**
+  (`components/admin/QrTab.tsx`) : les 5 QR Codes de la plateforme (RSVP, livre d'or, retrouver
+  ma carte, site, contrôle des entrées) + QR personnalisés ; lien, titre et consigne modifiables,
+  affiche imprimable téléchargeable en PNG ou imprimée. Onglet **/admin?tab=programme**
+  (`ProgrammeTab.tsx`) : étapes ajoutables, modifiables, réordonnables. « Notre histoire »
+  masquée par défaut, son texte et les parents se règlent dans Page d'accueil. Interrupteur
+  « Choix de la table par les invités » (Événement). Base locale `mariage-db-v5`.
+
+- **2026-10-21** — **Accueil réorganisé + choix de table.** Ordre et visibilité des sections dans
+  `components/home/HomeContent.tsx` ; « Notre histoire » passe en fin de page, Menu et Galerie
+  masqués par défaut. Nouvel onglet **/admin?tab=accueil** (`components/admin/HomeTab.tsx`) :
+  sections affichées, photo de fond du programme, dress code (couleurs, consigne), lieu de la
+  bénédiction nuptiale. Nouvelle rubrique `DressCodeSection.tsx`, photo de fond et liens
+  « Itinéraire » dans `Programme.tsx`, `Venue.tsx` devient « Les lieux » (bénédiction et
+  réception, carte commutable). RSVP : liste déroulante des tables (`RsvpForm.tsx`,
+  `getTableOptions`, `checkChosenTable`, `lib/tables.ts`). Base locale passée en `mariage-db-v4`.
 
 - **2026-10-12** — **Retrouver ma carte.** Page `/ma-carte` (`app/ma-carte/page.tsx`) : l'invité
   saisit le téléphone de son inscription ou le code de sa carte (`findRsvp`, limité en débit) et

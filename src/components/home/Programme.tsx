@@ -1,12 +1,15 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
-import { Camera, Church, GlassWater, Music, Utensils, type LucideIcon } from "lucide-react";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import { Camera, Church, GlassWater, MapPin, Music, Utensils, type LucideIcon } from "lucide-react";
+import Image from "next/image";
 import { useRef } from "react";
 import { SectionTitle } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
-import { wedding, type ProgrammeItem } from "@/config/wedding";
+import { defaultCeremony, defaultSettings, mapsDirectionsUrl, wedding } from "@/config/wedding";
+import { useEventInfo, useHomeSections, useSettings } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
+import type { ProgrammeIcon, ProgrammeStep } from "@/types/interface";
 
 // Deux anneaux entrelacés : lucide n'a pas d'icône d'alliances
 function Rings({ className }: { className?: string }) {
@@ -19,7 +22,7 @@ function Rings({ className }: { className?: string }) {
   );
 }
 
-const ICONS: Record<ProgrammeItem["icon"], LucideIcon | typeof Rings> = {
+export const PROGRAMME_ICONS: Record<ProgrammeIcon, LucideIcon | typeof Rings> = {
   rings: Rings,
   church: Church,
   camera: Camera,
@@ -28,46 +31,106 @@ const ICONS: Record<ProgrammeItem["icon"], LucideIcon | typeof Rings> = {
   music: Music,
 };
 
+const PHOTOS = { traditionnel: wedding.images.traditionnel, portrait: wedding.images.portrait } as const;
+
 export function Programme() {
-  const ref = useRef<HTMLOListElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
   const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 60%"] });
+  const { programmePhoto, programmePhotoUrl } = useHomeSections();
+  const event = useEventInfo();
+  const settings = useSettings().data;
+  const ceremony = settings?.ceremony ?? defaultCeremony;
+  const steps = settings?.programme ?? defaultSettings.programme;
+
+  const { scrollYProgress } = useScroll({ target: listRef, offset: ["start 75%", "end 60%"] });
   // Le filet doré se trace au fil du défilement
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
+  // La photo envoyée défile plus lentement que le contenu (parallaxe)
+  const { scrollYProgress: sectionProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
+  const photoY = useTransform(sectionProgress, [0, 1], reduce ? ["0%", "0%"] : ["-6%", "6%"]);
+
+  // Les deux photos fournies ne font que 590 px : étirées en plein écran elles deviennent floues.
+  // Elles restent donc à leur taille réelle, au centre de l'écran ; une photo envoyée par
+  // l'organisateur (1920 px) peut, elle, couvrir toute la section.
+  const builtinPhoto = programmePhoto === "traditionnel" || programmePhoto === "portrait" ? PHOTOS[programmePhoto] : null;
+  const customPhoto = programmePhoto === "personnalisee" && programmePhotoUrl ? programmePhotoUrl : null;
+  const hasPhoto = !!(builtinPhoto || customPhoto);
+  const addressOf = (place: ProgrammeStep["place"]) => (place === "ceremony" ? ceremony.address : event.venueAddress);
 
   return (
-    <section id="programme" className="ambient-bg px-6 py-24 sm:py-32">
-      <SectionTitle eyebrow="Le déroulement" title="Programme de la journée">
-        Chaque moment a été pensé pour vous. Voici le fil de cette journée que nous avons hâte de vivre à vos côtés.
-      </SectionTitle>
+    <section
+      ref={sectionRef}
+      id="programme"
+      // Avec photo, la section passe en palette nuit (classe `dark`) : le bleu nuit prolonge le
+      // fond de studio des photos et le texte reste lisible par-dessus.
+      // `overflow-clip` et non `overflow-hidden` : ce dernier empêcherait la photo de rester fixe.
+      className={cn("relative overflow-clip px-6 py-24 sm:py-32", hasPhoto ? "dark bg-background text-foreground" : "ambient-bg")}
+    >
+      {builtinPhoto && (
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {/* La photo reste au centre de l'écran pendant qu'on fait défiler le programme */}
+          <div className="sticky top-0 flex h-[100svh] items-center justify-center">
+            <div className="relative aspect-square w-full max-w-[590px] [mask-image:radial-gradient(closest-side,black_72%,transparent)]">
+              <Image src={builtinPhoto} alt="" fill sizes="590px" className="object-cover" />
+            </div>
+          </div>
+        </div>
+      )}
+      {customPhoto && (
+        <motion.div aria-hidden style={{ y: photoY }} className="pointer-events-none absolute -inset-y-[8%] inset-x-0">
+          {/* eslint-disable-next-line @next/next/no-img-element -- image envoyée (data URL), hors optimiseur */}
+          <img src={customPhoto} alt="" className="size-full object-cover" />
+          <div className="absolute inset-0 bg-background/45" />
+        </motion.div>
+      )}
 
-      <ol ref={ref} className="relative mx-auto mt-16 max-w-4xl">
-        <span aria-hidden className="absolute bottom-0 left-6 top-0 w-px bg-border md:left-1/2" />
-        <motion.span
-          aria-hidden
-          style={{ scaleY: reduce ? 1 : progress }}
-          className="absolute bottom-0 left-6 top-0 w-px origin-top bg-gold md:left-1/2"
-        />
+      <div className="relative">
+        <div className={cn(hasPhoto && "glass mx-auto max-w-2xl rounded-3xl px-6 py-8")}>
+          <SectionTitle eyebrow="Le déroulement" title="Programme de la journée">
+            Chaque moment a été pensé pour vous. Voici le fil de cette journée que nous avons hâte de vivre à vos côtés.
+          </SectionTitle>
+        </div>
 
-        {wedding.programme.map((step, i) => {
-          const Icon = ICONS[step.icon];
-          const left = i % 2 === 0;
-          return (
-            <li key={step.titre} className="relative mb-8 pl-16 last:mb-0 md:grid md:grid-cols-2 md:gap-16 md:pl-0">
-              <span className="absolute left-6 top-6 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border border-gold bg-card text-gold shadow-lg md:left-1/2">
-                <Icon className="size-5" />
-              </span>
-              <Reveal x={left ? -36 : 36} y={0} className={cn(left ? "md:col-start-1 md:text-right" : "md:col-start-2")}>
-                <div className="glass lift rounded-3xl p-6">
-                  <p className="font-display text-3xl font-semibold text-gold">{step.heure}</p>
-                  <h3 className="mt-1 font-display text-2xl">{step.titre}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-                </div>
-              </Reveal>
-            </li>
-          );
-        })}
-      </ol>
+        <ol ref={listRef} className="relative mx-auto mt-16 max-w-4xl">
+          <span aria-hidden className="absolute bottom-0 left-6 top-0 w-px bg-border md:left-1/2" />
+          <motion.span
+            aria-hidden
+            style={{ scaleY: reduce ? 1 : progress }}
+            className="absolute bottom-0 left-6 top-0 w-px origin-top bg-gold md:left-1/2"
+          />
+
+          {steps.map((step, i) => {
+            const Icon = PROGRAMME_ICONS[step.icon];
+            const left = i % 2 === 0;
+            return (
+              <li key={step.id} className="relative mb-8 pl-16 last:mb-0 md:grid md:grid-cols-2 md:gap-16 md:pl-0">
+                <span className="absolute left-6 top-6 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border border-gold bg-card text-gold md:left-1/2">
+                  <Icon className="size-5" />
+                </span>
+                <Reveal x={left ? -36 : 36} y={0} className={cn(left ? "md:col-start-1 md:text-right" : "md:col-start-2")}>
+                  <div className="glass lift rounded-3xl p-6">
+                    <p className="font-display text-3xl font-semibold text-gold">{step.heure}</p>
+                    <h3 className="mt-1 font-display text-2xl">{step.titre}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                    {step.place !== "none" && (
+                      <a
+                        href={mapsDirectionsUrl(addressOf(step.place))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-gold underline-offset-4 hover:underline"
+                      >
+                        <MapPin className="size-4" />
+                        {step.place === "ceremony" ? ceremony.name : event.venueName} · Itinéraire
+                      </a>
+                    )}
+                  </div>
+                </Reveal>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </section>
   );
 }

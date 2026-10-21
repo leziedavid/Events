@@ -1,5 +1,4 @@
-// Types partagés. Ils reprennent le futur modèle Prisma (table RSVP) pour que le passage
-// au backend NestJS ne change que la couche `src/api`.
+// Types partagés : forme exacte des réponses de l'API event-backend (voir src/api).
 
 export interface BaseResponse<T> {
   statusCode: number;
@@ -22,6 +21,13 @@ export interface Rsvp {
   /** Invitation révoquée par l'organisateur : elle ne compte plus et sa carte est refusée */
   isRevoked: boolean;
   revokedAt: string | null;
+  /** Table choisie par l'invité lui-même (sinon placement automatique) : « Réorganiser » la respecte */
+  tableChoisie?: boolean;
+  /** Contenu du QR Code, signé par l'API (aucune donnée personnelle) */
+  qrToken?: string;
+  /** Gestion seulement : jamais renvoyés par la carte publique */
+  email?: string | null;
+  source?: "PUBLIC" | "ADMIN";
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +37,15 @@ export interface RsvpInput {
   telephone: string;
   categorie: GuestCategory;
   nombrePersonnes: number;
+  /** Table souhaitée ; absente = placement automatique */
+  tableNumero?: number;
+}
+
+/** Une table proposée dans la liste déroulante du formulaire RSVP */
+export interface TableOption {
+  numero: number;
+  seats: number;
+  free: number;
 }
 
 export interface CapacityStats {
@@ -42,8 +57,28 @@ export interface CapacityStats {
   isClosed: boolean;
 }
 
+/** Photo de la médiathèque de l'événement (servie par l'API, en WebP) */
+export interface EventMediaView {
+  id: string;
+  kind: "HERO" | "SECONDARY" | "PROGRAMME" | "GALLERY";
+  url: string;
+  alt: string;
+  order: number;
+  width: number | null;
+  height: number | null;
+}
+
 /** Réglages modifiables depuis l'administration (valeurs par défaut dans config/wedding.ts) */
 export interface EventSettings {
+  /** Fournis par l'API (absents des valeurs de départ) */
+  id?: string;
+  slug?: string;
+  media?: {
+    hero: EventMediaView | null;
+    secondary: EventMediaView | null;
+    programme: EventMediaView | null;
+    gallery: EventMediaView[];
+  };
   capacity: number;
   tableSize: number;
   familyMax: number;
@@ -51,6 +86,95 @@ export interface EventSettings {
   guestbookOpen: boolean;
   event: EventInfo;
   menu: MenuSettings;
+  home: HomeSections;
+  dressCode: DressCode;
+  ceremony: CeremonyPlace;
+  programme: ProgrammeStep[];
+  story: StoryInfo;
+  /** Les invités choisissent eux-mêmes leur table dans le formulaire RSVP */
+  tableChoice: boolean;
+  qrCodes: QrCodeEntry[];
+}
+
+/** QR Codes de la plateforme ; `custom` = ajouté par l'organisateur (lien libre) */
+export type QrKind = "rsvp" | "livre-dor" | "ma-carte" | "accueil" | "verification" | "custom";
+
+export interface QrCodeEntry {
+  id: string;
+  kind: QrKind;
+  /** Titre imprimé au-dessus du QR Code */
+  label: string;
+  /** Consigne imprimée sous le QR Code */
+  caption: string;
+  /** Page du site (« /rsvp ») ou adresse complète (« https://… ») */
+  target: string;
+}
+
+export type ProgrammeIcon = "rings" | "church" | "camera" | "glass" | "utensils" | "music";
+
+/** Étape du programme de la journée, modifiable dans /admin?tab=programme */
+export interface ProgrammeStep {
+  id: string;
+  heure: string;
+  titre: string;
+  description: string;
+  icon: ProgrammeIcon;
+  /** Lieu de l'étape : un lien « Itinéraire » s'affiche sous la description */
+  place: "none" | "ceremony" | "reception";
+}
+
+/** Section « Notre histoire » */
+export interface StoryInfo {
+  text: string;
+  /** Vide = non affiché */
+  groomParents: string;
+  brideParents: string;
+}
+
+/**
+ * Sections de la page d'accueil que l'organisateur peut masquer puis réafficher.
+ * Le menu du repas a son propre interrupteur (`menu.visible`).
+ */
+export interface HomeSections {
+  programme: boolean;
+  dressCode: boolean;
+  gallery: boolean;
+  venue: boolean;
+  guestbook: boolean;
+  /** « Notre histoire », placée en fin de page */
+  story: boolean;
+  /** Photo de fond du programme de la journée */
+  programmePhoto: ProgrammePhoto;
+  /**
+   * Photo envoyée par l'organisateur, utilisée si `personnalisee` : adresse de l'API en lecture ;
+   * à l'enregistrement, une data URL (nouvelle photo) ou « » (photo retirée).
+   */
+  programmePhotoUrl: string;
+}
+
+export type ProgrammePhoto = "traditionnel" | "portrait" | "personnalisee" | "aucune";
+
+export interface DressColor {
+  name: string;
+  /** Couleur au format #RRGGBB */
+  hex: string;
+}
+
+export interface DressCode {
+  title: string;
+  description: string;
+  colors: DressColor[];
+  /** Recommandation complémentaire (ex. couleur à éviter) ; vide = rien d'affiché */
+  note: string;
+}
+
+/**
+ * Lieu de la bénédiction nuptiale (la réception est dans `EventInfo`). Son heure est celle de
+ * l'étape du programme rattachée à ce lieu : une seule source, pas de risque d'incohérence.
+ */
+export interface CeremonyPlace {
+  name: string;
+  address: string;
 }
 
 export type MenuCategory = "ENTREE" | "PLAT" | "ACCOMPAGNEMENT" | "DESSERT" | "BOISSON";
@@ -103,6 +227,14 @@ export interface ScanLog {
   createdAt: string;
 }
 
+/** Arrivées en direct (contrôle des entrées) */
+export interface ScanStats {
+  arrivedInvitations: number;
+  arrivedPersons: number;
+  totalInvitations: number;
+  totalPersons: number;
+}
+
 export interface LookupResult {
   status: "FOUND" | "ALREADY_USED" | "INVALID" | "REVOKED";
   guest?: Rsvp;
@@ -128,15 +260,24 @@ export interface ReminderLog {
 export type UserRole = "ADMIN" | "AGENT";
 
 export interface SessionUser {
+  id: string;
   name: string;
+  username: string;
   role: UserRole;
+  /** Événement géré dans cette session (routes /events/:eventId de l'API) */
+  eventId: string;
 }
 
-export interface LocalDb {
-  guests: Rsvp[];
-  scans: ScanLog[];
-  guestbook: GuestbookMessage[];
-  reminders: ReminderLog[];
-  menu: MenuItem[];
-  settings: EventSettings;
+/** Compte de l'espace organisateurs, tel que renvoyé par l'API (jamais de mot de passe) */
+export interface AccountView {
+  id: string;
+  memberId: string;
+  name: string;
+  identifiant: string;
+  role: UserRole;
+  /** Propriétaire de l'événement : ne peut être ni retiré ni rétrogradé */
+  isOwner: boolean;
+  /** Un compte désactivé ne peut plus accéder à l'événement, sans être supprimé */
+  active: boolean;
+  createdAt: string;
 }

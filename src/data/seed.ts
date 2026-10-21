@@ -5,7 +5,7 @@ import { defaultSettings, wedding } from "@/config/wedding";
 import { buildDefaultMenu } from "@/data/menu";
 import { codeFromSeed } from "@/lib/security";
 import { findTable } from "@/lib/tables";
-import type { GuestCategory, LocalDb, Rsvp, UserRole } from "@/types/interface";
+import type { Account, GuestCategory, LocalDb, Rsvp, UserRole } from "@/types/interface";
 
 type SeedGuest = [nom: string, telephone: string, categorie: GuestCategory, nombre: number];
 
@@ -94,13 +94,20 @@ export function buildSeedDb(): LocalDb {
     })),
     reminders: [],
     menu: buildDefaultMenu(),
+    accounts: buildDefaultAccounts(),
     settings: defaultSettings,
   };
 }
 
 // Comptes de démonstration (affichés sur /login). Ils disparaîtront avec le backend :
 // l'authentification se fera alors par JWT.
-export const DEMO_ACCOUNTS: { identifiant: string; password: string; name: string; role: UserRole }[] = [
-  { identifiant: "admin", password: "mariage2026", name: "Organisateur", role: "ADMIN" },
-  { identifiant: "agent", password: "entree2026", name: "Agent d'accueil", role: "AGENT" },
+export const DEMO_ACCOUNTS: { id: string; identifiant: string; password: string; name: string; role: UserRole }[] = [
+  { id: "acc-admin", identifiant: "admin", password: "mariage2026", name: "Organisateur", role: "ADMIN" },
+  { id: "acc-agent", identifiant: "agent", password: "entree2026", name: "Agent d'accueil", role: "AGENT" },
 ];
+
+/** Comptes de départ de la base locale ; ensuite gérés dans /admin?tab=comptes */
+export function buildDefaultAccounts(): Account[] {
+  const createdAt = new Date().toISOString();
+  return DEMO_ACCOUNTS.map((a) => ({ ...a, active: true, createdAt }));
+}

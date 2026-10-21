@@ -7,16 +7,18 @@ import { useState } from "react";
 import { MusicToggle } from "@/components/layout/MusicToggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
-import { useEventInfo, useSettings } from "@/hooks/useWedding";
+import { useEventInfo, useHomeSections } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "#maries", label: "Les mariés" },
-  { href: "#programme", label: "Programme" },
-  { href: "#menu", label: "Menu" },
-  { href: "#galerie", label: "Galerie" },
-  { href: "#lieu", label: "Lieu" },
-  { href: "#livre-dor", label: "Livre d'or" },
+// Dans l'ordre de la page ; `section` relie chaque lien à son interrupteur de /admin?tab=accueil
+const LINKS: { href: string; label: string; section: "programme" | "dressCode" | "menu" | "gallery" | "venue" | "guestbook" | "story" }[] = [
+  { href: "#programme", label: "Programme", section: "programme" },
+  { href: "#dress-code", label: "Dress code", section: "dressCode" },
+  { href: "#menu", label: "Menu", section: "menu" },
+  { href: "#galerie", label: "Galerie", section: "gallery" },
+  { href: "#lieu", label: "Lieux", section: "venue" },
+  { href: "#livre-dor", label: "Livre d'or", section: "guestbook" },
+  { href: "#maries", label: "Notre histoire", section: "story" },
 ];
 
 export function Monogram({ className }: { className?: string }) {
@@ -36,8 +38,8 @@ export function SiteHeader({ variant = "home" }: { variant?: "home" | "page" }) 
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // Pas de lien vers une section que l'organisateur a masquée
-  const showMenuLink = useSettings().data?.menu.visible ?? true;
-  const links = LINKS.filter((link) => link.href !== "#menu" || showMenuLink);
+  const sections = useHomeSections();
+  const links = LINKS.filter((link) => sections[link.section]);
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
   return (

@@ -1,42 +1,27 @@
-// Menu du repas (simulé en localStorage) : les plats présentés aux invités sur l'accueil.
+"use client";
 
-import { menuItemSchema, type MenuItemInput } from "@/lib/schemas";
-import { delay, fail, ok, readDb, writeDb } from "@/lib/storage";
+import { eventUrl, hasAdminSession, publicEventUrl, publicFetch, secureFetch, toJson } from "@/api/api";
+import type { MenuItemInput } from "@/lib/schemas";
 import type { BaseResponse, MenuItem } from "@/types/interface";
 
+/* =======================================================
+   MENU DU REPAS — voir event-backend/src/content
+======================================================= */
+
+/** Organisateur : tous les plats (masqués compris) ; public : plats visibles seulement */
 export async function getMenu(): Promise<BaseResponse<MenuItem[]>> {
-  await delay(200);
-  return ok(readDb().menu);
+  const res = hasAdminSession() ? await secureFetch(eventUrl("/menu")) : await publicFetch(publicEventUrl("/menu"));
+  return toJson(res);
 }
 
 export async function createMenuItem(input: MenuItemInput): Promise<BaseResponse<MenuItem>> {
-  await delay(350);
-  const parsed = menuItemSchema.safeParse(input);
-  if (!parsed.success) return fail(400, parsed.error.issues[0]?.message ?? "Plat invalide");
-
-  const db = readDb();
-  const item: MenuItem = { id: crypto.randomUUID(), ...parsed.data, visible: true };
-  writeDb({ ...db, menu: [...db.menu, item] });
-  return ok(item, "Plat ajouté");
+  return toJson(await secureFetch(eventUrl("/menu"), { method: "POST", body: JSON.stringify(input) }));
 }
 
 export async function updateMenuItem(id: string, patch: Partial<MenuItemInput> & { visible?: boolean }): Promise<BaseResponse<MenuItem>> {
-  await delay(300);
-  const db = readDb();
-  const current = db.menu.find((m) => m.id === id);
-  if (!current) return fail(404, "Plat introuvable.");
-
-  const parsed = menuItemSchema.safeParse({ ...current, ...patch });
-  if (!parsed.success) return fail(400, parsed.error.issues[0]?.message ?? "Plat invalide");
-
-  const updated: MenuItem = { ...current, ...parsed.data, visible: patch.visible ?? current.visible };
-  writeDb({ ...db, menu: db.menu.map((m) => (m.id === id ? updated : m)) });
-  return ok(updated, "Plat modifié");
+  return toJson(await secureFetch(eventUrl(`/menu/${id}`), { method: "PATCH", body: JSON.stringify(patch) }));
 }
 
 export async function deleteMenuItem(id: string): Promise<BaseResponse<boolean>> {
-  await delay(300);
-  const db = readDb();
-  writeDb({ ...db, menu: db.menu.filter((m) => m.id !== id) });
-  return ok(true, "Plat supprimé");
+  return toJson(await secureFetch(eventUrl(`/menu/${id}`), { method: "DELETE" }));
 }
