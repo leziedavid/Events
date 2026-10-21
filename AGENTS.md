@@ -113,12 +113,15 @@ npx tsc --noEmit -p .
   une fois l'invité entré. « Supprimer » efface définitivement.
 - La capacité ne peut pas descendre sous le nombre de personnes confirmées ; changer la taille
   des tables replace tous les invités (`reassignAll`).
-- Prénoms, date et lieu ne sont modifiables que **tant qu'aucune invitation n'existe** (même
-  révoquée) : ils figurent sur les cartes. Le verrou est dans `updateSettings` ; « Tout effacer »
-  (onglet Données, `clearAllData`) vide les invitations en gardant réglages et menu, ce qui le lève.
+- Prénoms, date et lieu restent **toujours modifiables** (onglet Événement), même avec des
+  inscrits : les cartes en ligne lisent `useEventInfo()` et se mettent à jour ; celles déjà
+  téléchargées en image gardent les anciennes valeurs (l'onglet le signale).
+- **RSVP réels en production depuis le 21/10/2026** : aucune donnée fictive dans le site (plus de
+  `data/seed.ts` ni `lib/storage.ts`, plus de plats codés en dur) ; tout vient de l'API.
 - Inscriptions fermées (`rsvpOpen = false`) : le formulaire public est clôturé, l'organisateur
   peut toujours ajouter des invités (`createRsvp(..., { asAdmin: true })`).
-- Le QR Code ne contient que `CODE.SIGNATURE`, aucune donnée personnelle. Une invitation ne se
+- Le QR Code contient le jeton signé par l'API (`qrToken`, `INV1…`), aucune donnée personnelle ;
+  les cartes de la première version (`CODE.SIGNATURE`) restent acceptées à l'entrée. Une invitation ne se
   valide qu'une fois ; un second passage affiche l'heure de la première entrée.
 
 ## Conventions
@@ -168,6 +171,14 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 ## Dernières modifications (du plus récent au plus ancien)
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
+
+- **2026-10-21** — **Menu par QR Code, cartes signées par l'API, informations modifiables.**
+  Page **/menu** (`app/menu/page.tsx`, chargement / erreur / menu vide, pensée mobile) ouverte par
+  le nouveau QR Code « Le menu » de /admin?tab=qr-codes ; rendu partagé avec l'accueil
+  (`MenuBoard` dans `components/home/MenuSection.tsx`). La carte encode `qrToken` (jeton signé de
+  l'API). Suppression des données de démonstration (`data/seed.ts`, `lib/storage.ts`, menu
+  fictif de `data/menu.ts`, signature de démo de `lib/security.ts`). Onglet Événement : prénoms,
+  date et lieu toujours modifiables.
 
 - **2026-10-21** — **Photo du programme nette, comptes, suivi des tables choisies.** Fond du
   programme refait (`Programme.tsx`) + envoi d'une photo personnelle (Page d'accueil,

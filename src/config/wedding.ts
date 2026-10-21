@@ -120,6 +120,7 @@ export const QR_DEFAULT_TARGETS: Record<Exclude<QrKind, "custom">, string> = {
   "ma-carte": "/ma-carte",
   accueil: "/",
   verification: "/verification",
+  menu: "/menu",
 };
 
 export const defaultQrCodes: QrCodeEntry[] = [
@@ -128,6 +129,7 @@ export const defaultQrCodes: QrCodeEntry[] = [
   { id: "qr-ma-carte", kind: "ma-carte", label: "Retrouver ma carte", caption: "Carte égarée ? Scannez et saisissez votre numéro de téléphone.", target: QR_DEFAULT_TARGETS["ma-carte"] },
   { id: "qr-accueil", kind: "accueil", label: "Notre mariage", caption: "Programme, lieux et dress code : tout est sur notre site.", target: QR_DEFAULT_TARGETS.accueil },
   { id: "qr-verification", kind: "verification", label: "Contrôle des entrées", caption: "Réservé aux agents d'accueil.", target: QR_DEFAULT_TARGETS.verification },
+  { id: "qr-menu", kind: "menu", label: "Le menu", caption: "Scannez pour découvrir le menu du repas.", target: QR_DEFAULT_TARGETS.menu },
 ];
 
 /** Adresse complète encodée dans un QR Code : une page du site est rattachée au domaine courant */

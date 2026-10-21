@@ -24,6 +24,7 @@ const USAGES: Record<QrCodeEntry["kind"], string> = {
   "ma-carte": "À imprimer pour l'accueil : les invités sans carte la retrouvent avec leur numéro.",
   accueil: "Mène au site du mariage ; à glisser dans les faire-part papier.",
   verification: "Pour les agents d'accueil : ouvre le scanner de contrôle des entrées.",
+  menu: "À poser sur les tables ou à glisser dans les faire-part : ouvre le menu du repas (page /menu).",
   custom: "QR Code ajouté par vous.",
 };
 

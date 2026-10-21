@@ -1,14 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eraser, FileSpreadsheet, FileText, Lock } from "lucide-react";
+import { Eraser, FileSpreadsheet, FileText } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { NumberField, Pill, Section, SettingRow, Switch, TextInput } from "@/components/admin/ui";
+import { NumberField, Section, SettingRow, Switch, TextInput } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
-import { coupleNamesOf, weddingDateLabel, weddingTimeLabel, weddingTitle } from "@/config/wedding";
+import { weddingTitle } from "@/config/wedding";
 import { useCapacity, useClearData, useEventInfo, useRsvps, useSettings, useUpdateSettings } from "@/hooks/useWedding";
 import { exportGuestsExcel, exportGuestsPdf } from "@/lib/export";
 import { eventSchema, type EventInput } from "@/lib/schemas";
@@ -34,45 +34,15 @@ const toLocalInput = (iso: string) => new Date(iso).toISOString().slice(0, 16);
 const fromLocalInput = (value: string) => `${value}:00+00:00`;
 
 /**
- * Noms, date et lieu. Modifiables seulement tant qu'aucun invité n'est inscrit : ils figurent
- * sur les cartes d'invitation, les changer ensuite fausserait celles déjà remises.
+ * Noms, date et lieu, toujours modifiables (même après les premières inscriptions). Les cartes
+ * en ligne se mettent à jour ; celles déjà téléchargées en image gardent les anciennes valeurs.
  */
 function EventInfoSection({ event, guestCount }: { event: EventInfo; guestCount: number }) {
   const update = useUpdateSettings();
-  const locked = guestCount > 0;
   const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<EventInput>({
     resolver: zodResolver(eventSchema),
     values: { ...event, date: toLocalInput(event.date) },
   });
-
-  if (locked) {
-    return (
-      <Section
-        title="Le mariage"
-        description={`Ces informations figurent sur les cartes d'invitation. Elles sont verrouillées depuis la première inscription (${guestCount} invitation${guestCount > 1 ? "s" : ""} enregistrée${guestCount > 1 ? "s" : ""}).`}
-        action={
-          <Pill>
-            <Lock className="size-3" />
-            Verrouillé
-          </Pill>
-        }
-      >
-        <SettingRow title="Mariés">
-          <span className="text-sm text-muted-foreground">{coupleNamesOf(event)}</span>
-        </SettingRow>
-        <SettingRow title="Date et heure">
-          <span className="text-sm text-muted-foreground">
-            {weddingDateLabel(event.date)} · {weddingTimeLabel(event.date)}
-          </span>
-        </SettingRow>
-        <SettingRow title="Lieu">
-          <span className="text-sm text-muted-foreground sm:text-right">
-            {event.venueName}, {event.venueAddress}
-          </span>
-        </SettingRow>
-      </Section>
-    );
-  }
 
   const onSubmit = handleSubmit((values) =>
     update.mutate(
@@ -82,7 +52,14 @@ function EventInfoSection({ event, guestCount }: { event: EventInfo; guestCount:
   );
 
   return (
-    <Section title="Le mariage" description="Modifiable tant qu'aucun invité n'est inscrit. Ces informations seront ensuite verrouillées, car elles figurent sur les cartes d'invitation.">
+    <Section
+      title="Le mariage"
+      description={
+        guestCount > 0
+          ? `Toujours modifiable. ${guestCount} invitation${guestCount > 1 ? "s sont déjà enregistrées" : " est déjà enregistrée"} : les cartes en ligne afficheront les nouvelles informations, mais celles déjà téléchargées ou imprimées garderont les anciennes.`
+          : "Prénoms, date et lieu affichés sur le site et sur les cartes d'invitation."
+      }
+    >
       <form onSubmit={onSubmit} noValidate>
         <SettingRow title="Prénom du marié" description="Affiché sur l'accueil, le faire-part et les cartes d'invitation.">
           <FieldCell error={errors.groomName?.message}>
@@ -140,7 +117,7 @@ export function SettingsTab() {
     }
   };
 
-  // On attend aussi la liste des invités : c'est elle qui dit si les informations sont verrouillées
+  // On attend aussi la liste des invités, pour prévenir de l'effet sur les cartes déjà remises
   if (!settings || !guests) return <p className="py-12 text-center text-sm text-muted-foreground">Chargement…</p>;
   const confirmed = capacity?.confirmed ?? 0;
 
@@ -211,7 +188,7 @@ export function SettingsTab() {
   );
 }
 
-/** Onglet « Données » : exports, mise à zéro et jeu de données de démonstration */
+/** Onglet « Données » : exports et remise à zéro des invitations */
 export function DataTab() {
   const { data: guests = [] } = useRsvps();
   const event = useEventInfo();

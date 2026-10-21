@@ -97,7 +97,7 @@ export interface EventSettings {
 }
 
 /** QR Codes de la plateforme ; `custom` = ajouté par l'organisateur (lien libre) */
-export type QrKind = "rsvp" | "livre-dor" | "ma-carte" | "accueil" | "verification" | "custom";
+export type QrKind = "rsvp" | "livre-dor" | "ma-carte" | "accueil" | "verification" | "menu" | "custom";
 
 export interface QrCodeEntry {
   id: string;

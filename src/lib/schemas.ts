@@ -152,7 +152,7 @@ export const settingsSchema = z
     programme: z.array(programmeStepSchema.extend({ id: z.string().min(1) })).max(15, "15 étapes maximum"),
     story: storySchema,
     tableChoice: z.boolean(),
-    qrCodes: z.array(qrCodeSchema.extend({ id: z.string().min(1), kind: z.enum(["rsvp", "livre-dor", "ma-carte", "accueil", "verification", "custom"]) })).max(20),
+    qrCodes: z.array(qrCodeSchema.extend({ id: z.string().min(1), kind: z.enum(["rsvp", "livre-dor", "ma-carte", "accueil", "verification", "menu", "custom"]) })).max(20),
     capacity: z.number().int().min(1, "Au moins 1 place").max(2000, "2000 places maximum"),
     tableSize: z.number().int().min(2, "Au moins 2 personnes par table").max(20, "20 personnes maximum par table"),
     familyMax: z.number().int().min(1, "Au moins 1 personne").max(20, "20 personnes maximum"),

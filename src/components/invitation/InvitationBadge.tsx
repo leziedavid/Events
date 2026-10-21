@@ -5,7 +5,6 @@ import { QRCodeSVG } from "qrcode.react";
 import type { Ref } from "react";
 import { deOrD, wedding } from "@/config/wedding";
 import { useEventInfo } from "@/hooks/useWedding";
-import { buildQrPayload } from "@/lib/security";
 import { displayName, personnes } from "@/lib/utils";
 import type { Rsvp } from "@/types/interface";
 
@@ -51,7 +50,8 @@ export function InvitationBadge({ guest, ref }: { guest: Rsvp; ref?: Ref<HTMLDiv
 
           <div className="flex flex-col items-center">
             <div className="rounded-[2cqw] bg-white p-[1.6cqw] shadow-[0_2cqw_5cqw_-1cqw_rgba(0,0,0,0.7)]">
-              <QRCodeSVG value={buildQrPayload(guest.verificationCode)} size={256} level="M" fgColor="#0a1426" className="size-[23cqw]" />
+              {/* Jeton signé par l'API (INV1…) ; à défaut, le code seul, accepté comme une saisie manuelle */}
+              <QRCodeSVG value={guest.qrToken ?? guest.verificationCode} size={256} level="M" fgColor="#0a1426" className="size-[23cqw]" />
             </div>
             <p className="mt-[1.4cqw] font-mono text-[2.3cqw] font-semibold tracking-[0.2em]">{guest.verificationCode}</p>
           </div>
