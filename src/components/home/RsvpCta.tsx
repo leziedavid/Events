@@ -1,6 +1,6 @@
 "use client";
 
-import { ScanLine } from "lucide-react";
+import { CalendarPlus, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { CapacityMeter } from "@/components/shared/CapacityMeter";
@@ -8,7 +8,8 @@ import { Divider } from "@/components/shared/Ornaments";
 import { Reveal } from "@/components/shared/Reveal";
 import { buttonVariants } from "@/components/ui/button";
 import { useMounted } from "@/hooks/useMounted";
-import { useCapacity, useQrUrl } from "@/hooks/useWedding";
+import { googleCalendarUrl } from "@/config/wedding";
+import { useCapacity, useEventInfo, useQrUrl } from "@/hooks/useWedding";
 import { cn } from "@/lib/utils";
 
 /** QR Code principal : il mène au formulaire RSVP, au même titre que le bouton */
@@ -19,6 +20,7 @@ export function RsvpCta() {
   const closed = !!capacity && (capacity.isFull || capacity.isClosed);
   const qrUrl = useQrUrl("rsvp");
   const rsvpUrl = mounted ? qrUrl : "";
+  const event = useEventInfo();
 
   return (
     <section id="rsvp" className="px-6 py-24 sm:py-32">
@@ -41,13 +43,26 @@ export function RsvpCta() {
               <CapacityMeter />
             </div>
 
-            <Link
-              href="/rsvp"
-              aria-disabled={closed}
-              className={cn(buttonVariants({ size: "lg" }), "mt-8 w-full sm:w-auto", closed && "pointer-events-none opacity-50")}
-            >
-              {closed ? "Réservations clôturées" : "Confirmer ma présence"}
-            </Link>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row md:justify-start">
+              <Link
+                href="/rsvp"
+                aria-disabled={closed}
+                className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto", closed && "pointer-events-none opacity-50")}
+              >
+                {closed ? "Réservations clôturées" : "Confirmer ma présence"}
+              </Link>
+              {/* Bloc sur fond foncé : texte clair, la variante « outline » prend sinon la couleur du texte de la page */}
+              <a
+                href={googleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full text-[#f6eadb] hover:bg-white/10 sm:w-auto")}
+              >
+                <CalendarPlus />
+                Ajouter à mon agenda
+              </a>
+            </div>
+            
             <p className="mt-4 text-sm text-[#f6eadb]/75">
               Déjà inscrit&nbsp;?{" "}
               <Link href="/ma-carte" className="font-medium text-gold-soft underline underline-offset-4 hover:text-white">
