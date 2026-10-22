@@ -5,7 +5,6 @@ import { QRCodeSVG } from "qrcode.react";
 import type { Ref } from "react";
 import { deOrD, wedding } from "@/config/wedding";
 import { useEventInfo, useTableLabel } from "@/hooks/useWedding";
-import { displayName, personnes } from "@/lib/utils";
 import type { Rsvp } from "@/types/interface";
 
 /**
@@ -40,11 +39,10 @@ export function InvitationBadge({ guest, ref }: { guest: Rsvp; ref?: Ref<HTMLDiv
               <span className="h-px w-[9cqw] bg-[#d98c64]/70" />
             </div>
 
-            <p className="text-[2.1cqw] uppercase tracking-[0.3em] text-[#f6eadb]/75">Bienvenue à</p>
-            <p className="mt-[0.6cqw] font-display text-[5.6cqw] font-semibold leading-tight text-[#f0c4a2]">{displayName(guest)}</p>
-            <p className="mt-[0.8cqw] text-[2.3cqw] text-[#f6eadb]/85">
-              {personnes(guest.nombrePersonnes)} · {tableName(guest.tableNumero)}
-            </p>
+            {/* Le nom tel qu'il a été saisi, sans la catégorie (« Famille ») ni le nombre de personnes */}
+            <p className="text-[2.1cqw] uppercase tracking-[0.3em] text-[#f6eadb]/75">Bienvenue</p>
+            <p className="mt-[0.6cqw] font-display text-[5.6cqw] font-semibold leading-tight text-[#f0c4a2]">{guest.nom}</p>
+            <p className="mt-[0.8cqw] text-[2.3cqw] text-[#f6eadb]/85">Vous êtes à la {tableName(guest.tableNumero)}</p>
 
             <p className="mt-[3cqw] font-display text-[2.9cqw] italic">Votre présence nous honorera.</p>
           </div>

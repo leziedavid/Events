@@ -14,7 +14,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { googleCalendarUrl, weddingTitle } from "@/config/wedding";
 import { useEventInfo, useRsvp } from "@/hooks/useWedding";
 import { badgeFile, badgeFilename, downloadBadge } from "@/lib/badge";
-import { displayName } from "@/lib/utils";
 
 export default function InvitationPage() {
   const { code } = useParams<{ code: string }>();
@@ -96,7 +95,7 @@ export default function InvitationPage() {
                 >
                   <PartyPopper className="size-7" />
                 </motion.span>
-                <h1 className="mt-4 font-display text-4xl font-medium sm:text-5xl">Merci, {displayName(guest)}&nbsp;!</h1>
+                <h1 className="mt-4 font-display text-4xl font-medium sm:text-5xl">Merci, {guest.nom}&nbsp;!</h1>
                 <Divider className="mt-4" />
                 <p className="mx-auto mt-4 max-w-lg text-[15px] text-muted-foreground">
                   Votre présence est confirmée. Voici votre carte d&apos;invitation : enregistrez-la et présentez son QR Code à l&apos;entrée.

@@ -183,6 +183,11 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
 
+- **2026-10-23** — **Carte d'invitation simplifiée.** « Bienvenue » + le nom tel que saisi
+  (`guest.nom`, sans « Famille » ni catégorie) + « Vous êtes à la Table VIP 1 » (plus de nombre
+  de personnes) dans `InvitationBadge.tsx` ; titre de `/invitation/[code]` : « Merci, {nom} ! ».
+  `displayName` (préfixe « Famille ») reste utilisé dans la gestion.
+
 - **2026-10-23** — **Formulaire public sans nombre de personnes.** Même en « Famille », le
   formulaire RSVP ne demande plus combien de personnes viendront (`RsvpForm`, prop `askPersons`
   réservée à la gestion) : une famille qui confirme compte pour 1 personne.
