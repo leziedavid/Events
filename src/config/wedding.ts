@@ -89,9 +89,9 @@ export const defaultHome: HomeSections = {
 
 // Valeurs de démonstration, inspirées des tenues des photos (pagne kita orange, or, blanc)
 export const defaultDressCode: DressCode = {
-  title: "Élégance et couleurs du kita",
+  title: "Élégance et couleurs",
   description:
-    "Tenue de soirée chic. Pagnes, kita et tenues traditionnelles sont les bienvenus : venez sublimés dans les couleurs du mariage.",
+    "Toutes les tenues de soirée chic sont les bienvenues : venez sublimés par les couleurs du mariage.",
   // Deux couleurs nuancées (même valeurs que DRESS_CODE_COLORS de l'API)
   colors: [
     { name: "Terracotta", hex: "#C4673F" },

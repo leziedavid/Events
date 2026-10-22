@@ -4,16 +4,17 @@ import { motion } from "framer-motion";
 import { Ban, CalendarPlus, Download, Loader2, PartyPopper, SearchX, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InvitationBadge } from "@/components/invitation/InvitationBadge";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Divider } from "@/components/shared/Ornaments";
 import { EASE } from "@/components/shared/Reveal";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Modal } from "@/components/ui/MotionModal";
 import { googleCalendarUrl, weddingTitle } from "@/config/wedding";
 import { useEventInfo, useRsvp } from "@/hooks/useWedding";
-import { badgeFile, badgeFilename, downloadBadge } from "@/lib/badge";
+import { badgeFile, badgeFilename, canShareFile, downloadFile, isAppleMobile } from "@/lib/badge";
 
 export default function InvitationPage() {
   const { code } = useParams<{ code: string }>();
@@ -21,12 +22,59 @@ export default function InvitationPage() {
   const event = useEventInfo();
   const badgeRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<"download" | "share" | null>(null);
+  // Image de la carte préparée à l'avance : sur iPhone, la feuille de partage (« Enregistrer
+  // l'image » → Photos) ne s'ouvre que si elle suit immédiatement le toucher de l'invité
+  const fileRef = useRef<File | null>(null);
+  // Dernier recours (iOS ancien, partage refusé) : l'image affichée, à enregistrer d'un appui long
+  const [preview, setPreview] = useState<string | null>(null);
 
-  const run = async (kind: "download" | "share", action: (node: HTMLDivElement) => Promise<void>) => {
-    if (!badgeRef.current) return;
+  const cardKey = guest ? `${guest.id}|${guest.nom}|${guest.tableNumero}|${guest.qrToken ?? ""}` : "";
+  useEffect(() => {
+    if (!cardKey || !badgeRef.current) return;
+    fileRef.current = null;
+    let cancelled = false;
+    // Après l'animation d'apparition de la carte (≈ 1 s) : capture d'une carte complète. Une
+    // capture refusée (carte pas encore affichée, téléphone lent) est retentée, 4 fois au plus.
+    let id: ReturnType<typeof setTimeout>;
+    const attempt = (left: number) => {
+      id = setTimeout(() => {
+        if (cancelled || !badgeRef.current) return;
+        badgeFile(badgeRef.current, badgeFilename(guest!.verificationCode))
+          .then((file) => {
+            if (!cancelled) fileRef.current = file;
+          })
+          .catch(() => {
+            if (left > 1) attempt(left - 1);
+          });
+      }, 1400);
+    };
+    attempt(4);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cardKey résume la carte affichée
+  }, [cardKey]);
+
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  /** Fichier de la carte : celui préparé à l'avance, sinon généré maintenant */
+  const getFile = async () => {
+    if (fileRef.current) return fileRef.current;
+    if (!badgeRef.current) throw new Error("Carte indisponible");
+    const file = await badgeFile(badgeRef.current, badgeFilename(guest!.verificationCode));
+    fileRef.current = file;
+    return file;
+  };
+
+  const showPreview = (file: File) => setPreview(URL.createObjectURL(file));
+
+  const run = async (kind: "download" | "share", action: () => Promise<void>) => {
     setBusy(kind);
     try {
-      await action(badgeRef.current);
+      await action();
     } catch (e) {
       // L'annulation de la feuille de partage n'est pas une erreur à signaler
       if ((e as Error).name !== "AbortError") toast.error("Impossible de générer la carte. Réessayez.");
@@ -35,21 +83,42 @@ export default function InvitationPage() {
     }
   };
 
+  /**
+   * Partage du fichier. `navigator.share` est appelé sans aucune attente quand l'image est prête
+   * (exigence d'iOS) ; si le système refuse malgré tout, l'image s'affiche pour un appui long.
+   */
+  const shareFile = async (file: File, data: ShareData) => {
+    try {
+      await navigator.share({ ...data, files: [file] });
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      showPreview(file);
+    }
+  };
+
   const download = () =>
-    run("download", async (node) => {
-      await downloadBadge(node, badgeFilename(guest!.verificationCode));
+    run("download", async () => {
+      const ready = fileRef.current;
+      if (isAppleMobile()) {
+        // iPhone / iPad : la feuille de partage propose « Enregistrer l'image » (galerie Photos).
+        // Fichier seul, sans texte : avec un texte, certaines versions d'iOS masquent cette option.
+        if (ready && canShareFile(ready)) return shareFile(ready, {});
+        return showPreview(ready ?? (await getFile()));
+      }
+      downloadFile(ready ?? (await getFile()));
       toast.success("Carte enregistrée");
     });
 
   const share = () =>
-    run("share", async (node) => {
-      const file = await badgeFile(node, badgeFilename(guest!.verificationCode));
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: weddingTitle(event), text: "Ma carte d'invitation" });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Lien de l'invitation copié");
-      }
+    run("share", async () => {
+      const ready = fileRef.current;
+      const data = { title: weddingTitle(event), text: "Ma carte d'invitation" };
+      if (ready && canShareFile(ready)) return shareFile(ready, data);
+      const file = ready ?? (await getFile());
+      if (canShareFile(file) && !isAppleMobile()) return shareFile(file, data);
+      if (isAppleMobile()) return showPreview(file);
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Lien de l'invitation copié");
     });
 
   return (
@@ -130,6 +199,18 @@ export default function InvitationPage() {
           )}
         </div>
       </main>
+
+      <Modal open={!!preview} onClose={() => setPreview(null)} title="Enregistrer la carte" size="md">
+        {preview && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Appuyez longuement sur l&apos;image, puis choisissez <strong>« Ajouter à Photos »</strong> (ou « Enregistrer l&apos;image »).
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- image générée dans le navigateur (blob) */}
+            <img src={preview} alt="Carte d'invitation" className="w-full rounded-xl" style={{ WebkitTouchCallout: "default" }} />
+          </div>
+        )}
+      </Modal>
     </>
   );
 }

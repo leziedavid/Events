@@ -68,6 +68,10 @@ const nextConfig = {
       // API / websocket / Firebase
       [
         "connect-src 'self'",
+        // data: et blob: : la carte d'invitation est convertie en image (html-to-image puis
+        // fetch de la data URL) pour être téléchargée ou partagée — sans eux, export impossible
+        "data:",
+        "blob:",
         apiUrl,
         "https://event-api.djamko.com",
         "https://api.djamko.com",

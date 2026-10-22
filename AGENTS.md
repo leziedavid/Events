@@ -183,6 +183,15 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
 
+- **2026-10-23** — **Télécharger / partager la carte sur iPhone.** `lib/badge.ts` + page
+  `/invitation/[code]` : image préparée dès l'affichage de la carte (iOS n'ouvre la feuille de
+  partage que si l'appel suit immédiatement le toucher) ; sur iPhone/iPad, « Télécharger » ouvre
+  la feuille de partage avec le fichier seul (« Enregistrer l'image » → Photos), à défaut l'image
+  s'affiche pour un appui long (« Ajouter à Photos ») ; ordinateur / Android : téléchargement
+  direct. Capture à blanc puis capture réelle (polices appliquées), polices intégrées une seule
+  fois par page (`getFontEmbedCSS`, plus de cacheBust : 225 → 32 requêtes), capture vide refusée.
+  CSP : `connect-src` doit garder `data:` et `blob:` (export impossible sans eux).
+
 - **2026-10-23** — **Carte d'invitation simplifiée.** « Bienvenue » + le nom tel que saisi
   (`guest.nom`, sans « Famille » ni catégorie) + « Vous êtes à la Table VIP 1 » (plus de nombre
   de personnes) dans `InvitationBadge.tsx` ; titre de `/invitation/[code]` : « Merci, {nom} ! ».
