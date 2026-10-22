@@ -128,6 +128,10 @@ npx tsc --noEmit -p .
 
 - Couleurs via les tokens du thème (`primary`/`gold`, `navy`, `muted`, `success`, `warning`…),
   définis pour le clair et le nuit dans `globals.css`. Compatibilité `dark:` obligatoire.
+  **Palette du mariage : terracotta et beige** (comme le dress code) sur les pages publiques ;
+  les jetons gardent leurs noms (`gold` = terracotta, `navy` = brun terracotta profond). La
+  gestion garde sa palette or / bleu nuit, figée dans `.admin-ui` : ne pas l'oublier en
+  changeant les couleurs du site.
 - Exception : `InvitationBadge` a ses couleurs en dur et ses tailles en `cqw`, pour être identique
   à l'écran, en modale et dans l'image exportée.
 - **Espace de gestion (`/admin`)** : interface façon panneau de réglages — barre latérale groupée
@@ -171,6 +175,13 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 ## Dernières modifications (du plus récent au plus ancien)
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
+
+- **2026-10-22** — **Couleurs terracotta et beige.** Pages publiques passées en terracotta et
+  beige (jetons de `globals.css`, clair et nuit ; carte d'invitation, QR Codes, bloc RSVP,
+  couleur de la barre du navigateur) ; `/admin` inchangé (palette figée dans `.admin-ui`). Dress
+  code : deux couleurs nuancées (Terracotta `#C4673F`, Beige `#D9C2A3`), pastilles en dégradé de
+  leurs nuances (`DressCodeSection.tsx`). Côté API, le correctif unique
+  `2026-10-22-dress-code-terracotta-beige` (`prisma/seed-patches.ts`) met à jour l'événement.
 
 - **2026-10-22** — **Mairie (mariage civil).** « Nous rejoindre » (`components/home/Venue.tsx`)
   affiche la mairie en premier (mairie → bénédiction → réception), seulement si son nom et son

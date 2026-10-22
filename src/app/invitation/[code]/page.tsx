@@ -108,7 +108,7 @@ export default function InvitationPage() {
                 animate={{ opacity: 1, scale: 1, rotateX: 0 }}
                 transition={{ duration: 1, delay: 0.3, ease: EASE }}
                 style={{ transformPerspective: 1200 }}
-                className="mt-9 rounded-[1.6rem] shadow-[0_40px_80px_-35px_rgba(10,20,38,0.9)]"
+                className="mt-9 rounded-[1.6rem] shadow-[0_40px_80px_-35px_rgba(58,28,17,0.9)]"
               >
                 <InvitationBadge guest={guest} ref={badgeRef} />
               </motion.div>

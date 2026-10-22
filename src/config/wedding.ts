@@ -92,11 +92,10 @@ export const defaultDressCode: DressCode = {
   title: "Élégance et couleurs du kita",
   description:
     "Tenue de soirée chic. Pagnes, kita et tenues traditionnelles sont les bienvenus : venez sublimés dans les couleurs du mariage.",
+  // Deux couleurs nuancées (même valeurs que DRESS_CODE_COLORS de l'API)
   colors: [
-    { name: "Or", hex: "#C59D5F" },
-    { name: "Orange kita", hex: "#D9822B" },
-    { name: "Ivoire", hex: "#F5EFE3" },
-    { name: "Bleu nuit", hex: "#14274A" },
+    { name: "Terracotta", hex: "#C4673F" },
+    { name: "Beige", hex: "#D9C2A3" },
   ],
   note: "Merci d'éviter le blanc intégral, réservé à la mariée.",
 };

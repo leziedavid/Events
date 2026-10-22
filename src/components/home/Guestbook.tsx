@@ -37,7 +37,7 @@ export function Guestbook() {
               <Link href="/livre-dor" aria-label="Ouvrir le formulaire du livre d'or" className="shrink-0 rounded-2xl bg-white p-3 shadow-lg transition-transform duration-500 hover:rotate-1 hover:scale-105">
                 {/* Hauteur réservée avant l'hydratation pour éviter un saut de mise en page */}
                 <span className="block size-28 sm:size-32">
-                  {guestbookUrl && <QRCodeSVG value={guestbookUrl} size={160} level="M" fgColor="#14274a" className="size-full" />}
+                  {guestbookUrl && <QRCodeSVG value={guestbookUrl} size={160} level="M" fgColor="#3a1c11" className="size-full" />}
                 </span>
               </Link>
               <div>

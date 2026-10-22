@@ -3,70 +3,75 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Mode clair : ivoire, or et bleu nuit (le bleu des fonds de photo des mariés). */
+/* Couleurs du mariage : deux couleurs nuancées, terracotta et beige (= dress code).
+   Les noms des jetons restent `gold` (accent) et `navy` (fond foncé) pour ne pas toucher aux
+   composants : `gold` porte la terracotta, `navy` sa nuance la plus profonde.
+   La gestion (/admin) garde sa propre palette, figée plus bas dans `.admin-ui`.
+   Mode clair : fond beige, accents terracotta, texte brun profond. */
 :root {
-  --gold: #b0843a;
-  --gold-soft: #d9b979;
-  --navy: #14274a;
-  --leaf: #8fa58a;
-  --blossom: #e79aa2;
-  --blossom-deep: #b8475a;
+  --gold: #b85c38;
+  --gold-soft: #dba07f;
+  --navy: #4a2416;
+  --leaf: #9a9a72;
+  --blossom: #e8a98a;
+  --blossom-deep: #b5532f;
 
   --radius: 0.75rem;
-  --background: #fbf7f0;
-  --foreground: #1b2438;
-  --card: #fffdf9;
-  --card-foreground: #1b2438;
-  --popover: #fffdf9;
-  --popover-foreground: #1b2438;
+  --background: #f8f0e5;
+  --foreground: #2e1f18;
+  --card: #fffaf3;
+  --card-foreground: #2e1f18;
+  --popover: #fffaf3;
+  --popover-foreground: #2e1f18;
   --primary: var(--gold);
-  --primary-foreground: #fffdf9;
+  --primary-foreground: #fffaf3;
   --secondary: var(--navy);
-  --secondary-foreground: #f8f1e4;
-  --muted: #f3ebdd;
-  --muted-foreground: #6c6a66;
-  --accent: #f6ead4;
-  --accent-foreground: #1b2438;
+  --secondary-foreground: #f6eadb;
+  --muted: #efe2d0;
+  --muted-foreground: #74655b;
+  --accent: #f3dfcb;
+  --accent-foreground: #2e1f18;
   --destructive: #c2392f;
   --success: #1f9d61;
   --warning: #d98a1f;
-  --border: #e9dcc5;
-  --input: #e2d3b8;
+  --border: #e5d2bb;
+  --input: #dcc5a8;
   --ring: var(--gold-soft);
 
-  --glow-a: rgba(244, 190, 150, 0.38);
-  --glow-b: rgba(217, 185, 121, 0.22);
+  --glow-a: rgba(214, 132, 92, 0.3);
+  --glow-b: rgba(217, 194, 163, 0.4);
 }
 
-/* Mode nuit : le bleu nuit des photos devient le fond, l'or s'éclaircit. */
+/* Mode nuit : brun terracotta profond en fond, terracotta claire en accent, texte beige. */
 .dark {
-  --gold: #d6ae62;
-  --gold-soft: #b08a45;
-  --leaf: #7c9a84;
+  --gold: #e0916b;
+  --gold-soft: #b8693f;
+  --navy: #3a1c11;
+  --leaf: #8c8a68;
 
-  --background: #0a1426;
-  --foreground: #f5efe3;
-  --card: #101e38;
-  --card-foreground: #f5efe3;
-  --popover: #101e38;
-  --popover-foreground: #f5efe3;
+  --background: #1c120d;
+  --foreground: #f4e9dc;
+  --card: #2a1a12;
+  --card-foreground: #f4e9dc;
+  --popover: #2a1a12;
+  --popover-foreground: #f4e9dc;
   --primary: var(--gold);
-  --primary-foreground: #0a1426;
-  --secondary: #1b315c;
-  --secondary-foreground: #f5efe3;
-  --muted: #15264a;
-  --muted-foreground: #a9b3c7;
-  --accent: #1a2d54;
-  --accent-foreground: #f5efe3;
+  --primary-foreground: #1c120d;
+  --secondary: #4a2a1c;
+  --secondary-foreground: #f4e9dc;
+  --muted: #34221a;
+  --muted-foreground: #bfae9e;
+  --accent: #3d281e;
+  --accent-foreground: #f4e9dc;
   --destructive: #f0685c;
   --success: #3fcf8e;
   --warning: #f0a94a;
-  --border: rgba(214, 174, 98, 0.18);
+  --border: rgba(224, 145, 107, 0.2);
   --input: rgba(255, 255, 255, 0.16);
   --ring: var(--gold-soft);
 
-  --glow-a: rgba(41, 84, 160, 0.38);
-  --glow-b: rgba(214, 174, 98, 0.12);
+  --glow-a: rgba(184, 92, 56, 0.3);
+  --glow-b: rgba(217, 194, 163, 0.1);
 }
 
 @theme inline {
@@ -148,7 +153,7 @@
     border: 1px solid color-mix(in oklab, var(--gold) 24%, transparent);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: 0 20px 50px -28px rgba(20, 39, 74, 0.45);
+    box-shadow: 0 20px 50px -28px rgba(74, 36, 22, 0.45);
   }
 
   .text-gold-gradient {
@@ -175,8 +180,18 @@
 }
 
 /* Espace de gestion (/admin) : palette neutre et plate, façon panneau de réglages.
-   Les jetons du thème sont redéfinis localement ; l'or reste la couleur d'accent. */
+   Les jetons du thème sont redéfinis localement, accent or et bleu nuit compris : le passage du
+   site en terracotta et beige ne concerne que les pages publiques. */
 .admin-ui {
+  --gold: #b0843a;
+  --gold-soft: #d9b979;
+  --navy: #14274a;
+  --primary: var(--gold);
+  --primary-foreground: #fffdf9;
+  --secondary: var(--navy);
+  --secondary-foreground: #f8f1e4;
+  --ring: var(--gold-soft);
+  --destructive: #c2392f;
   --background: #ffffff;
   --foreground: #1f1e1d;
   --card: #ffffff;
@@ -191,6 +206,14 @@
 }
 
 .dark .admin-ui {
+  --gold: #d6ae62;
+  --gold-soft: #b08a45;
+  --primary: var(--gold);
+  --primary-foreground: #0a1426;
+  --secondary: #1b315c;
+  --secondary-foreground: #f5efe3;
+  --ring: var(--gold-soft);
+  --destructive: #f0685c;
   --background: #1f1e1d;
   --foreground: #f3f2ee;
   --card: #262624;

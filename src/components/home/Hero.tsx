@@ -61,9 +61,9 @@ export function Hero() {
           </motion.div>
 
           <motion.div variants={item} className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <Link href="/rsvp" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
+            {/* <Link href="/rsvp" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
               Confirmer ma présence
-            </Link>
+            </Link> */}
             <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}>
               <CalendarPlus />
               Ajouter à mon agenda

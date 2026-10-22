@@ -71,7 +71,7 @@ export function GoldFrame({ src, alt, priority, className }: { src: string; alt:
     <div className={cn("relative", className)}>
       <span aria-hidden className="absolute -inset-4 rotate-[4deg] border border-gold/70 sm:-inset-5" />
       <span aria-hidden className="absolute -inset-4 -rotate-[3deg] border border-gold/45 sm:-inset-5" />
-      <div className="relative aspect-[4/5] overflow-hidden bg-navy shadow-[0_30px_70px_-30px_rgba(10,20,38,0.8)]">
+      <div className="relative aspect-[4/5] overflow-hidden bg-navy shadow-[0_30px_70px_-30px_rgba(58,28,17,0.8)]">
         <Image src={src} alt={alt} fill priority={priority} sizes="(max-width: 1024px) 80vw, 460px" className="object-cover" />
       </div>
       <FloralCorner className="absolute -bottom-12 -left-14 w-40 sm:-left-20 sm:w-52" />
