@@ -58,10 +58,15 @@ export function Programme() {
   const customPhoto = programmePhoto === "personnalisee" && programmePhotoUrl ? programmePhotoUrl : null;
   const hasPhoto = !!(builtinPhoto || customPhoto);
   // Lieu d'une étape (lien « Itinéraire ») ; une mairie non renseignée n'affiche pas de lien
-  const placeOf = (place: ProgrammeStep["place"]) => {
-    if (place === "townHall") return hasPlace(townHall) ? townHall : null;
-    if (place === "ceremony") return ceremony;
-    if (place === "reception") return { name: event.venueName, address: event.venueAddress };
+  const placeOf = (step: ProgrammeStep) => {
+    if (step.place === "townHall") return hasPlace(townHall) ? townHall : null;
+    if (step.place === "ceremony") return ceremony;
+    if (step.place === "reception") return { name: event.venueName, address: event.venueAddress };
+    // Lieu saisi à la main dans /admin?tab=programme
+    if (step.place === "custom") {
+      const custom = { name: step.placeName ?? "", address: step.placeAddress ?? "" };
+      return hasPlace(custom) ? custom : null;
+    }
     return null;
   };
 
@@ -110,7 +115,7 @@ export function Programme() {
           {steps.map((step, i) => {
             const Icon = PROGRAMME_ICONS[step.icon];
             const left = i % 2 === 0;
-            const place = placeOf(step.place);
+            const place = placeOf(step);
             return (
               <li key={step.id} className="relative mb-8 pl-16 last:mb-0 md:grid md:grid-cols-2 md:gap-16 md:pl-0">
                 <span className="absolute left-6 top-6 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border border-gold bg-card text-gold md:left-1/2">

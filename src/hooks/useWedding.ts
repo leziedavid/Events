@@ -9,11 +9,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { hasStaffSession } from "@/api/api";
 import { createAccount, deleteAccount, getAccounts, setAccountPassword, updateAccount } from "@/api/accounts-api";
 import { addGuestbookMessage, deleteGuestbookMessage, getGuestbook, getReminders, sendReminder } from "@/api/guestbook-api";
-import { clearAllData, createRsvp, deleteRsvp, findRsvp, getCapacity, getRsvpByCode, getRsvps, getTableOptions, getTables, regenerateCard, restoreRsvp, revokeRsvp, updateRsvp } from "@/api/rsvp-api";
+import { clearAllData, createRsvp, deleteRsvp, findRsvp, getCapacity, getRsvpByCode, getRsvps, getTableOptions, getTables, regenerateCard, renameTable, restoreRsvp, revokeRsvp, updateRsvp } from "@/api/rsvp-api";
 import { createMenuItem, deleteMenuItem, getMenu, updateMenuItem } from "@/api/menu-api";
 import { getSettings, reassignTables, updateSettings } from "@/api/settings-api";
 import { getScans, getScanStats, lookupInvitation, validateEntry } from "@/api/scan-api";
 import { defaultEvent, defaultHome, defaultSettings, resolveQrTarget } from "@/config/wedding";
+import { tableLabel } from "@/lib/utils";
 import type { AccountInput, GuestbookInput, MenuItemInput, NewAccountInput, ReminderInput } from "@/lib/schemas";
 import type { BaseResponse, EventInfo, EventSettings, HomeSections, QrKind, RsvpInput, ScanSource } from "@/types/interface";
 
@@ -41,7 +42,7 @@ export const queryKeys = {
   settings: ["settings"] as const,
   accounts: ["accounts"] as const,
   scanStats: ["scan-stats"] as const,
-  tableOptions: (excludeId?: string) => ["table-options", excludeId ?? ""] as const,
+  tableOptions: (excludeId?: string, categorie?: string) => ["table-options", excludeId ?? "", categorie ?? ""] as const,
   menu: ["menu"] as const,
 };
 
@@ -52,8 +53,14 @@ export const useCapacity = () => useQuery({ queryKey: queryKeys.capacity, queryF
 export const useRsvps = () => useQuery({ queryKey: queryKeys.rsvps, queryFn: () => unwrap(getRsvps()), refetchInterval: LIVE });
 export const useRsvp = (code: string) =>
   useQuery({ queryKey: queryKeys.rsvp(code), queryFn: () => unwrap(getRsvpByCode(code)), enabled: !!code, retry: false });
-export const useTableOptions = (excludeId?: string) =>
-  useQuery({ queryKey: queryKeys.tableOptions(excludeId), queryFn: () => unwrap(getTableOptions(excludeId)) });
+export const useTableOptions = (excludeId?: string, categorie?: string) =>
+  useQuery({ queryKey: queryKeys.tableOptions(excludeId, categorie), queryFn: () => unwrap(getTableOptions(excludeId, categorie)) });
+
+/** « Table CAE » à partir du numéro (noms des tables fournis par les réglages) */
+export function useTableLabel(): (numero: number) => string {
+  const tables = useSettings().data?.tables;
+  return (numero: number) => tableLabel(numero, tables);
+}
 
 /** Sections de l'accueil (valeurs de départ pendant le chargement, pour éviter les apparitions) */
 export function useHomeSections(): HomeSections & { menu: boolean } {
@@ -89,6 +96,8 @@ export function useEventInfo(): EventInfo {
 
 export const useUpdateSettings = () => useMutation({ mutationFn: (patch: Partial<EventSettings>) => unwrap(updateSettings(patch)) });
 export const useReassignTables = () => useMutation({ mutationFn: () => unwrap(reassignTables()) });
+export const useRenameTable = () =>
+  useMutation({ mutationFn: ({ numero, name }: { numero: number; name: string }) => unwrap(renameTable(numero, name)) });
 export const useRevokeRsvp = () => useMutation({ mutationFn: (id: string) => unwrap(revokeRsvp(id)) });
 export const useRestoreRsvp = () => useMutation({ mutationFn: (id: string) => unwrap(restoreRsvp(id)) });
 export const useRegenerateCard = () => useMutation({ mutationFn: (id: string) => unwrap(regenerateCard(id)) });

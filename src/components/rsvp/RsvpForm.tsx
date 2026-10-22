@@ -25,20 +25,29 @@ interface RsvpFormProps {
   guestId?: string;
   /** Administration : la liste des tables reste disponible même si le choix est fermé aux invités */
   forceTableChoice?: boolean;
+  /**
+   * Administration : demander le nombre de personnes d'une famille. Le formulaire public ne le
+   * demande plus (demande des mariés) : une famille qui confirme compte pour une personne.
+   */
+  askPersons?: boolean;
 }
 
 /** Formulaire RSVP, partagé par la page publique et l'administration (ajout / modification) */
-export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPersons, guestId, forceTableChoice }: RsvpFormProps) {
+export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPersons, guestId, forceTableChoice, askPersons }: RsvpFormProps) {
   const { data: settings } = useSettings();
   const familyMax = settings?.familyMax ?? wedding.familyMax;
   const tableSize = settings?.tableSize ?? wedding.tableSize;
-  const { data: tables } = useTableOptions(guestId);
   const showTables = forceTableChoice || (settings?.tableChoice ?? true);
   const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<RsvpInput>({
     resolver: zodResolver(rsvpSchema),
     defaultValues: { nom: "", telephone: "", nombrePersonnes: 1, ...defaultValues },
   });
   const categorie = useWatch({ control, name: "categorie" });
+  // Les tables proposées dépendent de la catégorie : VIP 1 et VIP 2 pour la Famille et les
+  // Responsables de l'Église seulement (l'API refuse aussi une table VIP aux autres)
+  const { data: tables } = useTableOptions(guestId, categorie);
+  // Catégories du formulaire ; une invitation ancienne garde la sienne si elle n'est plus proposée
+  const choices = CATEGORIES.filter((c) => c.selectable || c.value === defaultValues?.categorie);
   const nombre = useWatch({ control, name: "nombrePersonnes" });
   const tableNumero = useWatch({ control, name: "tableNumero" });
   const isFamily = categorie === "FAMILLE";
@@ -68,8 +77,8 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-foreground/90">Vous êtes…</legend>
-        <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Catégorie">
-          {CATEGORIES.map(({ value, label, icon: Icon }) => {
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Catégorie">
+          {choices.map(({ value, formLabel, icon: Icon }) => {
             const selected = categorie === value;
             return (
               <button
@@ -79,14 +88,16 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
                 aria-checked={selected}
                 onClick={() => selectCategory(value)}
                 className={cn(
-                  "relative flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition-all duration-300 active:scale-[0.97]",
+                  // Icône au-dessus du libellé : un libellé long (« Responsables de l'Église ») passe à la ligne
+                  // entre ses mots et reste dans la carte, sur téléphone comme dans la modale de la gestion
+                  "relative flex min-w-0 flex-col items-start gap-2 rounded-2xl border px-3.5 py-3 text-left transition-all duration-300 active:scale-[0.97] sm:px-4",
                   selected ? "border-gold bg-gold/12 shadow-[0_10px_30px_-18px_var(--gold)]" : "border-input bg-card hover:border-gold/60",
                 )}
               >
                 <span className={cn("grid size-9 shrink-0 place-items-center rounded-full transition-colors", selected ? "bg-gold text-primary-foreground" : "bg-muted text-gold")}>
                   <Icon className="size-4" />
                 </span>
-                <span className="text-sm font-medium">{label}</span>
+                <span className="min-w-0 max-w-full break-words text-sm font-medium leading-tight">{formLabel}</span>
               </button>
             );
           })}
@@ -107,7 +118,7 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
       </Field>
 
       <AnimatePresence initial={false}>
-        {isFamily && (
+        {isFamily && askPersons && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -144,7 +155,11 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
         label="Choisir ma table"
         htmlFor="rsvp-table"
         error={errors.tableNumero?.message}
-        hint={`Tables de ${tableSize} places. Une table complète n'apparaît plus dans la liste.`}
+        hint={
+          categorie
+            ? `Tables de ${tableSize} places. Une table complète n'apparaît plus dans la liste.`
+            : "Choisissez d'abord votre catégorie : les tables proposées en dépendent."
+        }
       >
         <Select
           id="rsvp-table"
@@ -155,7 +170,8 @@ export function RsvpForm({ defaultValues, onSubmit, loading, submitLabel, maxPer
           <option value="">Placement automatique</option>
           {available.map((t) => (
             <option key={t.numero} value={t.numero}>
-              Table {t.numero} — {t.free === t.seats ? "libre" : `${t.free} place${t.free > 1 ? "s" : ""} libre${t.free > 1 ? "s" : ""}`}
+              {t.name}
+              {t.isVip ? " (réservée)" : ""} — {t.free === t.seats ? "libre" : `${t.free} place${t.free > 1 ? "s" : ""} libre${t.free > 1 ? "s" : ""}`}
             </option>
           ))}
         </Select>

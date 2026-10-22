@@ -6,7 +6,7 @@ export interface BaseResponse<T> {
   data?: T;
 }
 
-export type GuestCategory = "FAMILLE" | "AMI" | "COLLEGUE" | "CONNAISSANCE";
+export type GuestCategory = "FAMILLE" | "AMI" | "EGLISE" | "COLLEGUE" | "CONNAISSANCE";
 
 export interface Rsvp {
   id: string; // UUID
@@ -42,8 +42,17 @@ export interface RsvpInput {
 }
 
 /** Une table proposée dans la liste déroulante du formulaire RSVP */
-export interface TableOption {
+/** Table du plan de salle : les invitations la désignent par son numéro, l'affichage par son nom */
+export interface EventTable {
   numero: number;
+  /** « VIP 1 », « CAE »… modifiable dans /admin?tab=tables */
+  name: string;
+  /** Réservée aux parents et aux responsables de l'Église */
+  isVip: boolean;
+}
+
+/** Une table proposée dans la liste déroulante du formulaire RSVP */
+export interface TableOption extends EventTable {
   seats: number;
   free: number;
 }
@@ -96,6 +105,8 @@ export interface EventSettings {
   /** Les invités choisissent eux-mêmes leur table dans le formulaire RSVP */
   tableChoice: boolean;
   qrCodes: QrCodeEntry[];
+  /** Tables nommées (fournies par l'API) : générées selon le nombre de personnes attendues */
+  tables?: EventTable[];
 }
 
 /** QR Codes de la plateforme ; `custom` = ajouté par l'organisateur (lien libre) */
@@ -121,8 +132,13 @@ export interface ProgrammeStep {
   titre: string;
   description: string;
   icon: ProgrammeIcon;
-  /** Lieu de l'étape : un lien « Itinéraire » s'affiche sous la description */
-  place: "none" | "townHall" | "ceremony" | "reception";
+  /**
+   * Lieu de l'étape : un lien « Itinéraire » s'affiche sous la description. `custom` = lieu
+   * saisi à la main sur l'étape (`placeName`, `placeAddress`).
+   */
+  place: "none" | "townHall" | "ceremony" | "reception" | "custom";
+  placeName?: string;
+  placeAddress?: string;
 }
 
 /** Section « Notre histoire » */
@@ -208,8 +224,7 @@ export interface EventInfo {
   venueAddress: string;
 }
 
-export interface TableSummary {
-  numero: number;
+export interface TableSummary extends EventTable {
   seats: number;
   occupied: number;
   guests: Rsvp[];

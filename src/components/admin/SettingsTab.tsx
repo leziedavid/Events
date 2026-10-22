@@ -9,7 +9,7 @@ import { NumberField, Section, SettingRow, Switch, TextInput } from "@/component
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { weddingTitle } from "@/config/wedding";
-import { useCapacity, useClearData, useEventInfo, useRsvps, useSettings, useUpdateSettings } from "@/hooks/useWedding";
+import { useCapacity, useClearData, useEventInfo, useRsvps, useSettings, useTableLabel, useUpdateSettings } from "@/hooks/useWedding";
 import { exportGuestsExcel, exportGuestsPdf } from "@/lib/export";
 import { eventSchema, type EventInput } from "@/lib/schemas";
 import type { EventInfo, EventSettings } from "@/types/interface";
@@ -166,10 +166,17 @@ export function SettingsTab() {
 
       <Section title="Capacité" description="Ces réglages restent modifiables après les premières inscriptions.">
         <SettingRow
-          title="Nombre de places"
-          description={`Capacité totale de la réception. ${confirmed} personne${confirmed > 1 ? "s sont" : " est"} déjà confirmée${confirmed > 1 ? "s" : ""} : la capacité ne peut pas descendre en dessous. Les inscriptions se ferment d'elles-mêmes quand elle est atteinte.`}
+          title="Nombre de personnes attendues"
+          description={`Capacité totale de la réception : elle fixe aussi le nombre de tables, créées automatiquement (${Math.ceil(settings.capacity / settings.tableSize)} tables de ${settings.tableSize} aujourd'hui). Une table occupée ou renommée n'est jamais supprimée. ${confirmed} personne${confirmed > 1 ? "s sont" : " est"} déjà confirmée${confirmed > 1 ? "s" : ""} : la capacité ne peut pas descendre en dessous.`}
         >
-          <NumberField label="Nombre de places" value={settings.capacity} min={Math.max(1, confirmed)} max={2000} disabled={update.isPending} onCommit={(capacity) => save({ capacity }, `Capacité : ${capacity} places`)} />
+          <NumberField
+            label="Nombre de personnes attendues"
+            value={settings.capacity}
+            min={Math.max(1, confirmed)}
+            max={2000}
+            disabled={update.isPending}
+            onCommit={(capacity) => save({ capacity }, `Capacité : ${capacity} personnes · ${Math.ceil(capacity / settings.tableSize)} tables`)}
+          />
         </SettingRow>
         <SettingRow
           title="Personnes par table"
@@ -193,12 +200,13 @@ export function DataTab() {
   const { data: guests = [] } = useRsvps();
   const event = useEventInfo();
   const clear = useClearData();
+  const tableName = useTableLabel();
   const [confirm, setConfirm] = useState<"clear" | null>(null);
 
   const exportAs = async (kind: "excel" | "pdf") => {
     if (guests.length === 0) return toast.error("Aucun invité à exporter.");
     try {
-      await (kind === "excel" ? exportGuestsExcel(guests) : exportGuestsPdf(guests, weddingTitle(event)));
+      await (kind === "excel" ? exportGuestsExcel(guests, tableName) : exportGuestsPdf(guests, tableName, weddingTitle(event)));
       toast.success(`Export ${kind === "excel" ? "Excel" : "PDF"} généré (${guests.length} invitations)`);
     } catch {
       toast.error("L'export a échoué.");

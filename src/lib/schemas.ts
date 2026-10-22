@@ -110,12 +110,21 @@ export const townHallSchema = z
     if (v.address.length < 3) ctx.addIssue({ code: "custom", path: ["address"], message: "Indiquez l'adresse de la mairie" });
   });
 
-export const programmeStepSchema = z.object({
+const programmeStepFields = z.object({
   heure: z.string().trim().min(1, "Indiquez l'heure").max(10, "10 caractères maximum"),
   titre: z.string().trim().min(2, "Indiquez un titre").max(60, "60 caractères maximum"),
   description: z.string().trim().max(200, "200 caractères maximum"),
   icon: z.enum(["rings", "church", "camera", "glass", "utensils", "music"]),
-  place: z.enum(["none", "townHall", "ceremony", "reception"]),
+  place: z.enum(["none", "townHall", "ceremony", "reception", "custom"]),
+  placeName: z.string().trim().max(80, "80 caractères maximum"),
+  placeAddress: z.string().trim().max(160, "160 caractères maximum"),
+});
+
+/** Un « Autre lieu » exige son nom et son adresse (pour le lien Itinéraire) */
+export const programmeStepSchema = programmeStepFields.superRefine((v, ctx) => {
+  if (v.place !== "custom") return;
+  if (v.placeName.length < 2) ctx.addIssue({ code: "custom", path: ["placeName"], message: "Indiquez le nom du lieu" });
+  if (v.placeAddress.length < 3) ctx.addIssue({ code: "custom", path: ["placeAddress"], message: "Indiquez l'adresse du lieu" });
 });
 
 export const storySchema = z.object({
@@ -162,7 +171,7 @@ export const settingsSchema = z
     dressCode: dressCodeSchema,
     ceremony: ceremonySchema,
     townHall: townHallSchema,
-    programme: z.array(programmeStepSchema.extend({ id: z.string().min(1) })).max(15, "15 étapes maximum"),
+    programme: z.array(programmeStepFields.extend({ id: z.string().min(1) })).max(15, "15 étapes maximum"),
     story: storySchema,
     tableChoice: z.boolean(),
     qrCodes: z.array(qrCodeSchema.extend({ id: z.string().min(1), kind: z.enum(["rsvp", "livre-dor", "ma-carte", "accueil", "verification", "menu", "custom"]) })).max(20),

@@ -1,15 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowDown, ArrowUp, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ExternalLink, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { EmptyState, IconButton, Pill, Section } from "@/components/admin/ui";
 import { PROGRAMME_ICONS } from "@/components/home/Programme";
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { Modal } from "@/components/ui/MotionModal";
+import { mapsDirectionsUrl } from "@/config/wedding";
 import { useSettings, useUpdateSettings } from "@/hooks/useWedding";
 import { programmeStepSchema, type ProgrammeStepInput } from "@/lib/schemas";
 import type { ProgrammeIcon, ProgrammeStep } from "@/types/interface";
@@ -28,9 +29,10 @@ const PLACE_LABELS: Record<ProgrammeStep["place"], string> = {
   townHall: "Mairie",
   ceremony: "Lieu de la bénédiction",
   reception: "Lieu de la réception",
+  custom: "Autre lieu (saisi à la main)",
 };
 
-const PLACE_PILLS: Record<ProgrammeStep["place"], string> = { none: "", townHall: "Mairie", ceremony: "Bénédiction", reception: "Réception" };
+const PLACE_PILLS: Record<Exclude<ProgrammeStep["place"], "custom">, string> = { none: "", townHall: "Mairie", ceremony: "Bénédiction", reception: "Réception" };
 
 type Dialog = { type: "create" } | { type: "edit" | "delete"; step: ProgrammeStep } | null;
 
@@ -38,7 +40,7 @@ const fieldClass =
   "mt-1.5 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-ring/30 aria-invalid:border-destructive";
 
 function StepForm({ step, onSubmit, loading }: { step?: ProgrammeStep; onSubmit: (values: ProgrammeStepInput) => void; loading: boolean }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<ProgrammeStepInput>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<ProgrammeStepInput>({
     resolver: zodResolver(programmeStepSchema),
     defaultValues: {
       heure: step?.heure ?? "",
@@ -46,8 +48,12 @@ function StepForm({ step, onSubmit, loading }: { step?: ProgrammeStep; onSubmit:
       description: step?.description ?? "",
       icon: step?.icon ?? "rings",
       place: step?.place ?? "none",
+      placeName: step?.placeName ?? "",
+      placeAddress: step?.placeAddress ?? "",
     },
   });
+  const place = useWatch({ control, name: "place" });
+  const placeAddress = useWatch({ control, name: "placeAddress" });
   const error = (message?: string) => message && <p role="alert" className="mt-1 text-xs text-destructive">{message}</p>;
 
   return (
@@ -87,6 +93,29 @@ function StepForm({ step, onSubmit, loading }: { step?: ProgrammeStep; onSubmit:
           </select>
         </div>
       </div>
+      {/* Étape sans lieu automatique : nom et adresse saisis ici donnent le lien « Itinéraire » */}
+      {place === "custom" && (
+        <div className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="step-place-name" className="text-sm font-medium">Nom du lieu</label>
+            <input id="step-place-name" placeholder="Ex. Jardins du Golf Hôtel" aria-invalid={!!errors.placeName} className={`${fieldClass} h-10`} {...register("placeName")} />
+            {error(errors.placeName?.message)}
+          </div>
+          <div>
+            <label htmlFor="step-place-address" className="text-sm font-medium">Adresse</label>
+            <input id="step-place-address" placeholder="Ex. Boulevard Latrille, Cocody, Abidjan" aria-invalid={!!errors.placeAddress} className={`${fieldClass} h-10`} {...register("placeAddress")} />
+            {error(errors.placeAddress?.message)}
+          </div>
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Un lien « Itinéraire » vers cette adresse s&apos;affiche sous l&apos;étape, sur la page d&apos;accueil.{" "}
+            {placeAddress?.trim() && (
+              <a href={mapsDirectionsUrl(placeAddress)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+                Vérifier sur Google Maps <ExternalLink className="size-3" />
+              </a>
+            )}
+          </p>
+        </div>
+      )}
       <div className="flex justify-end pt-1">
         <Button type="submit" size="sm" loading={loading}>
           {step ? "Enregistrer" : "Ajouter l'étape"}
@@ -149,7 +178,7 @@ export function ProgrammeTab() {
                   {step.place !== "none" && (
                     <Pill>
                       <MapPin className="size-3" />
-                      {PLACE_PILLS[step.place]}
+                      {step.place === "custom" ? step.placeName : PLACE_PILLS[step.place]}
                     </Pill>
                   )}
                 </p>

@@ -94,7 +94,17 @@ export async function updateSettings(patch: Partial<EventSettings>): Promise<Bas
 
   // ─── Listes enregistrées d'un bloc ───
   if (patch.programme) {
-    const steps = patch.programme.map(({ id, heure, titre, description, icon, place }) => ({ id, heure, titre, description, icon, place }));
+    const steps = patch.programme.map(({ id, heure, titre, description, icon, place, placeName, placeAddress }) => ({
+      id,
+      heure,
+      titre,
+      description,
+      icon,
+      place,
+      // Le lieu saisi à la main n'est gardé que pour un « Autre lieu »
+      placeName: place === "custom" ? (placeName ?? "") : "",
+      placeAddress: place === "custom" ? (placeAddress ?? "") : "",
+    }));
     const err = failure(await toJson(await secureFetch(eventUrl("/programme"), { method: "PUT", body: JSON.stringify({ steps }) })));
     if (err) return err;
   }

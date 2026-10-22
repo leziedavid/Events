@@ -11,7 +11,7 @@ import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { Modal } from "@/components/ui/MotionModal";
 import { CATEGORIES, categoryMeta } from "@/config/categories";
 import { wedding } from "@/config/wedding";
-import { useCapacity, useCreateRsvp, useDeleteRsvp, useRestoreRsvp, useRevokeRsvp, useRsvps, useSettings, useUpdateRsvp, useValidateEntry } from "@/hooks/useWedding";
+import { useCapacity, useCreateRsvp, useDeleteRsvp, useRestoreRsvp, useRevokeRsvp, useRsvps, useSettings, useTableLabel, useUpdateRsvp, useValidateEntry } from "@/hooks/useWedding";
 import { badgeFilename, downloadBadge, printBadge } from "@/lib/badge";
 import { normalizePhone } from "@/lib/security";
 import { cn, displayName, formatHour, personnes } from "@/lib/utils";
@@ -31,6 +31,7 @@ export function GuestsTab() {
   const { data: guests = [], isLoading } = useRsvps();
   const { data: capacity } = useCapacity();
   const { data: settings } = useSettings();
+  const tableName = useTableLabel();
   const familyMax = settings?.familyMax ?? wedding.familyMax;
   const remaining = capacity?.remaining ?? 0;
 
@@ -154,7 +155,7 @@ export function GuestsTab() {
                       {g.telephone} · {c.label}
                       {!g.isRevoked && (
                         <>
-                          {" "}· Table {g.tableNumero}
+                          {" "}· {tableName(g.tableNumero)}
                           {g.tableChoisie && <span className="text-primary"> (choisie)</span>}
                         </>
                       )}{" "}
@@ -202,7 +203,7 @@ export function GuestsTab() {
       </Section>
 
       <Modal open={dialog?.type === "create"} onClose={close} title="Ajouter un invité" description="La table est attribuée automatiquement.">
-        <RsvpForm forceTableChoice submitLabel="Ajouter l'invité" loading={create.isPending} maxPersons={remaining} onSubmit={(values) => create.mutate(values, { onSuccess: done("Invité ajouté"), onError })} />
+        <RsvpForm forceTableChoice askPersons submitLabel="Ajouter l'invité" loading={create.isPending} maxPersons={remaining} onSubmit={(values) => create.mutate(values, { onSuccess: done("Invité ajouté"), onError })} />
       </Modal>
 
       <Modal open={dialog?.type === "edit"} onClose={close} title="Modifier l'invitation">
@@ -211,6 +212,7 @@ export function GuestsTab() {
             key={dialog.guest.id}
             guestId={dialog.guest.id}
             forceTableChoice
+            askPersons
             defaultValues={{ ...dialog.guest, tableNumero: dialog.guest.tableChoisie ? dialog.guest.tableNumero : undefined }}
             submitLabel="Enregistrer"
             loading={update.isPending}

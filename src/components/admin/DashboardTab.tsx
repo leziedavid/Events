@@ -8,7 +8,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { Box, EmptyState, Pill, Section, SettingRow } from "@/components/admin/ui";
 import { CATEGORIES } from "@/config/categories";
 import { wedding } from "@/config/wedding";
-import { useRsvps, useSettings } from "@/hooks/useWedding";
+import { useRsvps, useSettings, useTableLabel } from "@/hooks/useWedding";
 import { displayName, formatDateTime, personnes } from "@/lib/utils";
 
 const tooltipStyle = {
@@ -22,6 +22,7 @@ const tooltipStyle = {
 export function DashboardTab() {
   const { data: allGuests = [] } = useRsvps();
   const { data: settings } = useSettings();
+  const tableName = useTableLabel();
   const capacity = settings?.capacity ?? wedding.capacity;
 
   const stats = useMemo(() => {
@@ -153,7 +154,7 @@ export function DashboardTab() {
         }
       >
         {stats.guests.slice(0, 5).map((g) => (
-          <SettingRow key={g.id} title={displayName(g)} description={`${personnes(g.nombrePersonnes)} · Table ${g.tableNumero} · ${formatDateTime(g.createdAt)}`}>
+          <SettingRow key={g.id} title={displayName(g)} description={`${personnes(g.nombrePersonnes)} · ${tableName(g.tableNumero)} · ${formatDateTime(g.createdAt)}`}>
             {g.isVerified ? <Pill tone="success">Arrivé</Pill> : <Pill>En attente</Pill>}
           </SettingRow>
         ))}

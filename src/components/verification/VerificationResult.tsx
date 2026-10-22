@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { categoryMeta } from "@/config/categories";
 import { wedding } from "@/config/wedding";
+import { useTableLabel } from "@/hooks/useWedding";
 import { cn, displayName, formatHour, personnes } from "@/lib/utils";
 import type { LookupResult } from "@/types/interface";
 
@@ -33,6 +34,7 @@ function Row({ icon, label, children }: { icon: ReactNode; label: string; childr
 
 export function VerificationResult({ result, justValidated, onValidate, validating, onNext }: Props) {
   const { guest, status } = result;
+  const tableName = useTableLabel();
 
   if (status === "INVALID" || !guest) {
     return (
@@ -110,7 +112,7 @@ export function VerificationResult({ result, justValidated, onValidate, validati
           <Row icon={<Users className="size-4 text-gold" />} label="Nombre">{personnes(guest.nombrePersonnes)}</Row>
           <Row icon={<Tag className="size-4 text-gold" />} label="Catégorie">{category.label}</Row>
           <Row icon={<Armchair className="size-4 text-gold" />} label="Table">
-            <span className="font-display text-2xl font-semibold text-gold">{guest.tableNumero}</span>
+            <span className="font-display text-2xl font-semibold text-gold">{tableName(guest.tableNumero)}</span>
           </Row>
           <Row icon={<Clock className="size-4 text-gold" />} label="Statut">
             {justValidated || used ? (

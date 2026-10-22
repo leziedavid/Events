@@ -12,6 +12,13 @@ export function displayName(guest: Pick<Rsvp, "nom" | "categorie">): string {
   return guest.nom;
 }
 
+/** « Table CAE », « Table VIP 1 », « Table 16 » : le nom de la table, sinon son numéro */
+export function tableLabel(numero: number, tables?: { numero: number; name: string }[]): string {
+  const name = tables?.find((t) => t.numero === numero)?.name?.trim();
+  if (!name) return `Table ${numero}`;
+  return /^table\b/i.test(name) ? name : `Table ${name}`;
+}
+
 export function personnes(n: number): string {
   return `${n} personne${n > 1 ? "s" : ""}`;
 }

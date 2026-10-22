@@ -104,9 +104,16 @@ npx tsc --noEmit -p .
 
 - Capacité 150 personnes : `places restantes = 150 − somme des personnes confirmées`. À 0, le
   formulaire est remplacé par « Les réservations sont désormais clôturées. »
-- Famille : 1 à 8 personnes. Ami, collègue, connaissance : toujours 1.
+- Le formulaire public ne demande plus le nombre de personnes (pas même pour une famille) :
+  toute invitation confirmée par un invité compte pour 1 personne. Seule la gestion peut
+  indiquer la taille d'une famille (1 à 8, `askPersons` du formulaire, ou depuis la liste).
 - Tables de 8 : un groupe n'est jamais séparé ; il va à la première table où il tient
   (`findTable`). Une place libérée par une suppression est réutilisée en priorité.
+- Tables nommées (VIP 1, VIP 2, CAE, EDEN… puis « Table 16 »…), créées par l'API selon le nombre
+  de personnes attendues (arrondi supérieur de capacité / 8). **VIP 1 et VIP 2 sont réservées
+  aux catégories Famille et Responsables de l'Église** (règle vérifiée par l'API) ; le placement
+  automatique ne les utilise jamais. La carte affiche le nom du destinataire et le nom de la
+  table, jamais la catégorie.
 - Un numéro de téléphone = une seule invitation (comparaison sur le numéro normalisé).
 - Révocation (`isRevoked`) : l'invitation reste dans la liste mais ne compte plus (quota, tables,
   rappels) et sa carte est refusée à l'entrée ; restaurable s'il reste de la place. Impossible
@@ -175,6 +182,28 @@ dans `wedding.ts` ; à défaut une mélodie est générée par Web Audio).
 ## Dernières modifications (du plus récent au plus ancien)
 
 Tenir cette liste à jour à chaque fonctionnalité livrée (date, résumé, fichiers principaux).
+
+- **2026-10-23** — **Formulaire public sans nombre de personnes.** Même en « Famille », le
+  formulaire RSVP ne demande plus combien de personnes viendront (`RsvpForm`, prop `askPersons`
+  réservée à la gestion) : une famille qui confirme compte pour 1 personne.
+
+- **2026-10-23** — **Tables nommées, VIP, catégories.** Catégories du formulaire : Famille, Amis,
+  Collègue, Connaissance et la nouvelle « Responsables de l'Église » (`config/categories.ts`) ;
+  cartes de catégorie avec l'icône au-dessus du libellé (un libellé long ne déborde jamais).
+  Liste des tables du formulaire : le nom seul (« CAE », « VIP 1 »). Les tables viennent de l'API
+  (`EventSettings.tables`, `TableOption.name/isVip`) : nom affiché partout via
+  `useTableLabel()` / `tableLabel()` (carte, invités, entrées, exports). Formulaire : tables
+  proposées selon la catégorie (`useTableOptions(excludeId, categorie)`), VIP 1 / VIP 2 pour
+  Famille et Église seulement. **/admin?tab=tables** : toutes les tables, badge « Réservée »,
+  renommage, alerte de nom en double, PDF par table (`lib/table-pdf.ts` : page 1 nom en grand,
+  page 2 liste des invités). Onglet Événement : « Nombre de personnes attendues » → tables
+  créées automatiquement. `lib/tables.ts` (démo) supprimé.
+
+- **2026-10-22** — **Lieu saisi à la main sur une étape du programme.** /admin?tab=programme :
+  lieu « Autre lieu (saisi à la main) » avec nom et adresse (`ProgrammeTab.tsx`,
+  `programmeStepSchema`) ; l'accueil affiche alors « Nom · Itinéraire » sous l'étape
+  (`placeOf` dans `Programme.tsx`). Bouton « Ajouter à mon agenda » déplacé du Hero vers le bloc
+  RSVP (`RsvpCta.tsx`).
 
 - **2026-10-22** — **Couleurs terracotta et beige.** Pages publiques passées en terracotta et
   beige (jetons de `globals.css`, clair et nuit ; carte d'invitation, QR Codes, bloc RSVP,

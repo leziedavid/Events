@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Ref } from "react";
 import { deOrD, wedding } from "@/config/wedding";
-import { useEventInfo } from "@/hooks/useWedding";
+import { useEventInfo, useTableLabel } from "@/hooks/useWedding";
 import { displayName, personnes } from "@/lib/utils";
 import type { Rsvp } from "@/types/interface";
 
@@ -15,6 +15,7 @@ import type { Rsvp } from "@/types/interface";
  */
 export function InvitationBadge({ guest, ref }: { guest: Rsvp; ref?: Ref<HTMLDivElement> }) {
   const event = useEventInfo();
+  const tableName = useTableLabel();
   return (
     <div className="@container w-full">
       <div ref={ref} className="relative aspect-[16/10] w-full overflow-hidden rounded-[3cqw] bg-[#3a1c11] text-[#f6eadb]">
@@ -42,7 +43,7 @@ export function InvitationBadge({ guest, ref }: { guest: Rsvp; ref?: Ref<HTMLDiv
             <p className="text-[2.1cqw] uppercase tracking-[0.3em] text-[#f6eadb]/75">Bienvenue à</p>
             <p className="mt-[0.6cqw] font-display text-[5.6cqw] font-semibold leading-tight text-[#f0c4a2]">{displayName(guest)}</p>
             <p className="mt-[0.8cqw] text-[2.3cqw] text-[#f6eadb]/85">
-              {personnes(guest.nombrePersonnes)} · Table {guest.tableNumero}
+              {personnes(guest.nombrePersonnes)} · {tableName(guest.tableNumero)}
             </p>
 
             <p className="mt-[3cqw] font-display text-[2.9cqw] italic">Votre présence nous honorera.</p>

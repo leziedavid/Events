@@ -1,7 +1,7 @@
 "use client";
 
 import { eventUrl, hasAdminSession, hasStaffSession, publicEventUrl, publicFetch, secureFetch, toJson, toQueryString } from "@/api/api";
-import type { BaseResponse, CapacityStats, Rsvp, RsvpInput, TableOption, TableSummary } from "@/types/interface";
+import type { BaseResponse, CapacityStats, EventTable, Rsvp, RsvpInput, TableOption, TableSummary } from "@/types/interface";
 
 /* =======================================================
    INVITATIONS (RSVP) — voir event-backend/src/guest
@@ -31,11 +31,18 @@ export async function findRsvp(query: string): Promise<BaseResponse<Rsvp>> {
  * `excludeId` pour la modification d'une invitation ; côté public, la liste n'existe que si
  * l'organisateur a ouvert le choix de la table.
  */
-export async function getTableOptions(excludeId?: string): Promise<BaseResponse<TableOption[]>> {
+export async function getTableOptions(excludeId?: string, categorie?: string): Promise<BaseResponse<TableOption[]>> {
+  // La catégorie décide des tables VIP proposées (Famille et Église oui, Amis non) ; l'API
+  // applique la même règle à l'enregistrement
   const res = hasAdminSession()
-    ? await secureFetch(eventUrl(`/tables/options?${toQueryString({ excludeId })}`))
-    : await publicFetch(publicEventUrl("/tables/options"));
+    ? await secureFetch(eventUrl(`/tables/options?${toQueryString({ excludeId, categorie })}`))
+    : await publicFetch(publicEventUrl(`/tables/options?${toQueryString({ categorie })}`));
   return toJson(res);
+}
+
+/** Renommer une table (son numéro, qui relie les invitations, ne change pas) */
+export async function renameTable(numero: number, name: string): Promise<BaseResponse<EventTable>> {
+  return toJson(await secureFetch(eventUrl(`/tables/${numero}/name`), { method: "PATCH", body: JSON.stringify({ name }) }));
 }
 
 /** Confirmation de présence (publique) ou ajout par l'organisateur (`asAdmin`) */
