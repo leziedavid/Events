@@ -1,25 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Great_Vibes, Jost } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { coupleNames, wedding, weddingDateLabel, weddingTitle } from "@/config/wedding";
 
+// Polices hébergées dans le projet (src/app/fonts, sous-ensemble latin de Google Fonts) :
+// next/font/google échouait au build Vercel (Next 16.4, « queries have exactly one entry »).
+// Fichiers variables : un seul fichier couvre toutes les graisses.
+
 // Texte courant
-const jost = Jost({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-jost", display: "swap" });
+const jost = localFont({
+  src: [{ path: "./fonts/jost.woff2", weight: "300 600", style: "normal" }],
+  variable: "--font-jost",
+  display: "swap",
+});
 
 // Titres : serif fin, esprit faire-part
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+const cormorant = localFont({
+  src: [
+    { path: "./fonts/cormorant-garamond.woff2", weight: "400 700", style: "normal" },
+    { path: "./fonts/cormorant-garamond-italic.woff2", weight: "400 700", style: "italic" },
+  ],
   variable: "--font-cormorant",
   display: "swap",
 });
 
 // Prénoms des mariés uniquement
-const script = Great_Vibes({ subsets: ["latin"], weight: "400", variable: "--font-script-face", display: "swap" });
+const script = localFont({ src: "./fonts/great-vibes.woff2", weight: "400", variable: "--font-script-face", display: "swap" });
 
 export const metadata: Metadata = {
   title: {
